@@ -295,11 +295,11 @@
                     <span class="stat-value" id="workerCount">0</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-label">⚔️ Warriors</span>
+                    <span class="stat-label">⚒️ Warriors</span>
                     <span class="stat-value" id="warriorCount">0</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-label">🪨 Resources</span>
+                    <span class="stat-label">💰 Resources</span>
                     <span class="stat-value" id="resourceCount">100</span>
                 </div>
                 <div class="stat">
@@ -570,6 +570,115 @@
             }
         }
 
+        // Sprite class for 3D rendering
+        class Sprite {
+            constructor(x, y, texture, width = 40, height = 60) {
+                this.x = x;
+                this.y = y;
+                this.texture = texture;
+                this.width = width;
+                this.height = height;
+            }
+
+            getScreenPosition(player, maze) {
+                const dx = this.x - player.x;
+                const dy = this.y - player.y;
+                
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx);
+                
+                let relativeAngle = angle - player.angle;
+                
+                while (relativeAngle > Math.PI) relativeAngle -= Math.PI * 2;
+                while (relativeAngle < -Math.PI) relativeAngle += Math.PI * 2;
+                
+                return { dx, dy, dist, angle, relativeAngle };
+            }
+
+            isVisible(player, maze) {
+                const pos = this.getScreenPosition(player, maze);
+                
+                if (Math.abs(pos.relativeAngle) > player.fov / 2) {
+                    return false;
+                }
+                
+                if (pos.dist < 0.5) {
+                    return false;
+                }
+                
+                return true;
+            }
+
+            render(player, maze, ctx, canvas) {
+                if (!this.isVisible(player, maze)) {
+                    return;
+                }
+
+                const pos = this.getScreenPosition(player, maze);
+                const correctedDist = pos.dist * Math.cos(pos.relativeAngle);
+                
+                if (correctedDist <= 0) return;
+                
+                const spriteHeight = (maze.cellSize * 300) / correctedDist;
+                const spriteWidth = spriteHeight * (this.width / this.height);
+                
+                const screenCenterX = (canvas.width / 2) + 
+                    (pos.relativeAngle / (player.fov / 2)) * (canvas.width / 2);
+                const screenY = canvas.height / 2;
+                
+                const spriteLeft = screenCenterX - spriteWidth / 2;
+                const spriteRight = screenCenterX + spriteWidth / 2;
+                const spriteTop = screenY - spriteHeight / 2;
+                const spriteBottom = screenY + spriteHeight / 2;
+                
+                if (spriteRight < 0 || spriteLeft > canvas.width) {
+                    return;
+                }
+                
+                const clampedLeft = Math.max(0, spriteLeft);
+                const clampedRight = Math.min(canvas.width, spriteRight);
+                
+                for (let screenX = clampedLeft; screenX < clampedRight; screenX++) {
+                    const spriteX = (screenX - spriteLeft) / spriteWidth;
+                    const texX = Math.floor(spriteX * this.texture.width);
+                    
+                    const clampedTop = Math.max(0, spriteTop);
+                    const clampedBottom = Math.min(canvas.height, spriteBottom);
+                    
+                    const sampleRate = Math.max(1, Math.floor((clampedBottom - clampedTop) / 32));
+                    
+                    for (let screenYPos = clampedTop; screenYPos < clampedBottom; screenYPos += sampleRate) {
+                        const spriteY = (screenYPos - spriteTop) / spriteHeight;
+                        const texY = Math.floor(spriteY * this.texture.height);
+                        
+                        const pixelData = this.getTexturePixel(texX, texY);
+                        
+                        if (pixelData.a > 128) {
+                            let brightness = Math.max(0.3, 1 - correctedDist / 500);
+                            
+                            ctx.fillStyle = `rgba(${Math.floor(pixelData.r * brightness)}, ${Math.floor(pixelData.g * brightness)}, ${Math.floor(pixelData.b * brightness)}, ${pixelData.a / 255})`;
+                            ctx.fillRect(screenX, screenYPos, 1, sampleRate);
+                        }
+                    }
+                }
+            }
+
+            getTexturePixel(x, y) {
+                x = Math.max(0, Math.min(x, this.texture.width - 1));
+                y = Math.max(0, Math.min(y, this.texture.height - 1));
+                
+                const imageData = this.texture.imageData;
+                const index = (Math.floor(y) * this.texture.width + Math.floor(x)) * 4;
+                
+                return {
+                    r: imageData.data[index],
+                    g: imageData.data[index + 1],
+                    b: imageData.data[index + 2],
+                    a: imageData.data[index + 3]
+                };
+            }
+        }
+
         // Brick texture
         const brickTextureData = [
             0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
@@ -632,15 +741,58 @@
         const brickTexture = createTextureFromData(brickTextureData);
         const brickPixelData = brickTexture.getContext('2d').getImageData(0, 0, 32, 32).data;
 
+        // Load worker sprite texture
+        let workerTexture = null;
+
+        const workerImg = new Image();
+        workerImg.crossOrigin = 'anonymous';
+        console.log('Starting to load worker sprite from: assets/worker.png');
+        workerImg.src = 'assets/worker.png';
+        
+        workerImg.onload = () => {
+            console.log('Worker image loaded successfully, dimensions:', workerImg.width, 'x', workerImg.height);
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = workerImg.width;
+                canvas.height = workerImg.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(workerImg, 0, 0);
+                
+                workerTexture = {
+                    width: workerImg.width,
+                    height: workerImg.height,
+                    imageData: ctx.getImageData(0, 0, workerImg.width, workerImg.height),
+                    canvas: canvas
+                };
+                
+                document.getElementById('phaseToggle').disabled = false;
+                console.log('Worker texture created successfully');
+            } catch (e) {
+                console.error('Error creating texture:', e);
+            }
+        };
+        
+        workerImg.onerror = (e) => {
+            console.error('Failed to load worker sprite:', e);
+            console.error('Image URL:', workerImg.src);
+            console.error('Image currentSrc:', workerImg.currentSrc);
+        };
+        
+        workerImg.onabort = () => {
+            console.error('Worker sprite loading was aborted');
+        };
+        
+        document.getElementById('phaseToggle').disabled = true;
+        document.getElementById('phaseToggle').title = 'Loading worker sprite...';
+
         class Maze {
             constructor(buildingsList, mineGridX, mineGridY) {
-                this.cellSize = MAZE_CELL_SIZE;  // FIXED: Use consistent cell size
+                this.cellSize = MAZE_CELL_SIZE;
                 this.buildings = buildingsList;
                 this.dayGridSize = GRID_SIZE;
                 this.mineGridX = mineGridX;
                 this.mineGridY = mineGridY;
                 
-                // FIXED: Use full canvas dimensions, not just what buildings occupy
                 this.cols = COLS;
                 this.rows = ROWS;
                 this.grid = [];
@@ -664,7 +816,6 @@
 
             placeBuildings() {
                 for (const building of this.buildings) {
-                    // FIXED: Direct conversion - since cellSize = dayGridSize, just use grid positions directly
                     const startX = building.gridX;
                     const startY = building.gridY;
                     const endX = building.gridX + building.type.width;
@@ -877,7 +1028,7 @@
                 nightCtx.font = '12px Courier';
                 nightCtx.fillText(`Player: (${Math.floor(this.x)}, ${Math.floor(this.y)})`, 10, 20);
                 nightCtx.fillText(`Maze: ${maze.cols}x${maze.rows}`, 10, 35);
-                nightCtx.fillText(`Angle: ${(this.angle * 180 / Math.PI).toFixed(0)}Â°`, 10, 50);
+                nightCtx.fillText(`Angle: ${(this.angle * 180 / Math.PI).toFixed(0)}°`, 10, 50);
                 
                 for (let i = 0; i < rays.length; i++) {
                     const ray = rays[i];
@@ -932,7 +1083,8 @@
                 Math.floor(COLS * 0.5) + Math.floor(Math.random() * Math.floor(COLS * 0.4)),
                 Math.floor(ROWS * 0.4) + Math.floor(Math.random() * Math.floor(ROWS * 0.4))
             ),
-            isNight: false
+            isNight: false,
+            nightSprites: []
         };
 
         let placingBuilding = null;
@@ -1066,7 +1218,29 @@
             if (keys['a']) player.move(-strafeX, -strafeY, maze);
             if (keys['d']) player.move(strafeX, strafeY, maze);
 
+            // Update workers even during night mode
+            for (const worker of gameState.workerList) {
+                worker.update();
+            }
+
             player.render(maze);
+
+            // Sync sprite positions with worker positions
+            for (let i = 0; i < gameState.nightSprites.length; i++) {
+                if (i < gameState.workerList.length) {
+                    const worker = gameState.workerList[i];
+                    gameState.nightSprites[i].x = worker.x;
+                    gameState.nightSprites[i].y = worker.y;
+                }
+            }
+
+            // Render sprites
+            for (const sprite of gameState.nightSprites) {
+                if (workerTexture) {
+                    sprite.render(player, maze, nightCtx, nightCanvas);
+                }
+            }
+
             maze.drawMinimap(player.x, player.y);
 
             requestAnimationFrame(nightGameLoop);
@@ -1084,6 +1258,13 @@
                 
                 maze = new Maze(gameState.buildings, gameState.mine.gridX, gameState.mine.gridY);
                 player = new Player(2 * maze.cellSize + maze.cellSize / 2, 2 * maze.cellSize + maze.cellSize / 2);
+                
+                // Create sprites for workers
+                gameState.nightSprites = [];
+                for (const worker of gameState.workerList) {
+                    const sprite = new Sprite(worker.x, worker.y, workerTexture, 30, 45);
+                    gameState.nightSprites.push(sprite);
+                }
                 
                 nightCanvas.requestPointerLock();
                 lastTime = performance.now();
