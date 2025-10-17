@@ -624,7 +624,10 @@
                 
                 const screenCenterX = (canvas.width / 2) + 
                     (pos.relativeAngle / (player.fov / 2)) * (canvas.width / 2);
-                const screenY = canvas.height / 2;
+                
+                // Apply pitch offset to match wall rendering
+                const pitchOffset = player.pitch * 300;
+                const screenY = canvas.height / 2 + pitchOffset;
                 
                 const spriteLeft = screenCenterX - spriteWidth / 2;
                 const spriteRight = screenCenterX + spriteWidth / 2;
