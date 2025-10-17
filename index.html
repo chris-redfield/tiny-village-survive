@@ -595,6 +595,49 @@
                 return { dx, dy, dist, angle, relativeAngle };
             }
 
+            isLineOfSightClear(player, maze) {
+                const startX = Math.floor(player.x / maze.cellSize);
+                const startY = Math.floor(player.y / maze.cellSize);
+                const endX = Math.floor(this.x / maze.cellSize);
+                const endY = Math.floor(this.y / maze.cellSize);
+                
+                // Bresenham line algorithm to check walls along the path
+                let x = startX;
+                let y = startY;
+                const dx = Math.abs(endX - startX);
+                const dy = Math.abs(endY - startY);
+                const stepX = startX < endX ? 1 : -1;
+                const stepY = startY < endY ? 1 : -1;
+                let err = dx - dy;
+                
+                while (true) {
+                    // Check if current cell has walls
+                    if (x >= 0 && x < maze.cols && y >= 0 && y < maze.rows) {
+                        const cell = maze.grid[y][x];
+                        // If all walls are set, it's a solid obstacle
+                        if (cell.walls.top && cell.walls.bottom && cell.walls.left && cell.walls.right) {
+                            return false;
+                        }
+                    } else {
+                        return false; // Out of bounds
+                    }
+                    
+                    if (x === endX && y === endY) break;
+                    
+                    const err2 = 2 * err;
+                    if (err2 > -dy) {
+                        err -= dy;
+                        x += stepX;
+                    }
+                    if (err2 < dx) {
+                        err += dx;
+                        y += stepY;
+                    }
+                }
+                
+                return true;
+            }
+
             isVisible(player, maze) {
                 const pos = this.getScreenPosition(player, maze);
                 
@@ -603,6 +646,11 @@
                 }
                 
                 if (pos.dist < 0.5) {
+                    return false;
+                }
+                
+                // Check line of sight for occlusion
+                if (!this.isLineOfSightClear(player, maze)) {
                     return false;
                 }
                 
@@ -625,7 +673,6 @@
                 const screenCenterX = (canvas.width / 2) + 
                     (pos.relativeAngle / (player.fov / 2)) * (canvas.width / 2);
                 
-                // Apply pitch offset to match wall rendering
                 const pitchOffset = player.pitch * 300;
                 const screenY = canvas.height / 2 + pitchOffset;
                 
@@ -642,6 +689,15 @@
                 const clampedRight = Math.min(canvas.width, spriteRight);
                 
                 for (let screenX = clampedLeft; screenX < clampedRight; screenX++) {
+                    // Map screen X to ray index for occlusion check
+                    const rayIndex = Math.floor((screenX / canvas.width) * player.rayCount);
+                    const wallDist = player.wallDistances[rayIndex] || Infinity;
+                    
+                    // Skip if wall is closer than sprite
+                    if (wallDist < correctedDist) {
+                        continue;
+                    }
+                    
                     const spriteX = (screenX - spriteLeft) / spriteWidth;
                     const texX = Math.floor(spriteX * this.texture.width);
                     
@@ -923,6 +979,7 @@
                 this.fov = Math.PI / 3;
                 this.rayCount = 240;
                 this.stripWidth = Math.ceil(nightCanvas.width / this.rayCount);
+                this.wallDistances = new Array(this.rayCount).fill(Infinity);
             }
 
             move(dx, dy, maze) {
@@ -1038,7 +1095,8 @@
                     const correctedDist = ray.dist * Math.cos(ray.angle - this.angle);
                     const wallHeight = (maze.cellSize * 300) / correctedDist;
                     
-                    const wallTop = (nightCanvas.height - wallHeight) / 2 + pitchOffset;
+                    // Store wall distance for occlusion culling
+                    this.wallDistances[i] = correctedDist;const wallTop = (nightCanvas.height - wallHeight) / 2 + pitchOffset;
                     const wallBottom = wallTop + wallHeight;
                     
                     const stripX = i * this.stripWidth;
