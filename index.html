@@ -339,7 +339,6 @@
     </div>
 
     <script>
-        // FIXED: Calculate canvas size based on actual container dimensions
         const DAY_CANVAS_WIDTH = 1120;
         const DAY_CANVAS_HEIGHT = 900;
         const NIGHT_CANVAS_WIDTH = 1400;
@@ -348,7 +347,6 @@
         const dayCanvas = document.getElementById('gameCanvas');
         const dayCtx = dayCanvas.getContext('2d');
         
-        // Set canvas to fill its container
         const dayContainer = document.getElementById('dayContainer');
         dayCanvas.width = dayContainer.clientWidth;
         dayCanvas.height = dayContainer.clientHeight;
@@ -363,15 +361,12 @@
         minimapCanvas.width = 200;
         minimapCanvas.height = 200;
 
-        // FIXED: Make grid sizes match the conversion ratio
-        // Night cellSize should be proportional to day GRID_SIZE
-        const GRID_SIZE = 40;  // Day grid
-        const MAZE_CELL_SIZE = 40;  // Night - now matches day for 1:1 conversion
+        const GRID_SIZE = 40;
+        const MAZE_CELL_SIZE = 40;
         
         const COLS = Math.floor(DAY_CANVAS_WIDTH / GRID_SIZE);
         const ROWS = Math.floor(DAY_CANVAS_HEIGHT / GRID_SIZE);
 
-        // Building types
         const BUILDING_TYPES = {
             TOWN_HALL: {
                 name: 'Town Hall',
@@ -395,7 +390,6 @@
             }
         };
 
-        // ===== CLASSES =====
         class Worker {
             constructor(startX, startY) {
                 this.x = startX * GRID_SIZE + GRID_SIZE / 2;
@@ -570,7 +564,6 @@
             }
         }
 
-        // Sprite class for 3D rendering
         class Sprite {
             constructor(x, y, texture, width = 40, height = 60) {
                 this.x = x;
@@ -578,6 +571,7 @@
                 this.texture = texture;
                 this.width = width;
                 this.height = height;
+                this.pixelData = { r: 0, g: 0, b: 0, a: 0 };
             }
 
             getScreenPosition(player, maze) {
@@ -595,62 +589,14 @@
                 return { dx, dy, dist, angle, relativeAngle };
             }
 
-            isLineOfSightClear(player, maze) {
-                const startX = Math.floor(player.x / maze.cellSize);
-                const startY = Math.floor(player.y / maze.cellSize);
-                const endX = Math.floor(this.x / maze.cellSize);
-                const endY = Math.floor(this.y / maze.cellSize);
-                
-                // Bresenham line algorithm to check walls along the path
-                let x = startX;
-                let y = startY;
-                const dx = Math.abs(endX - startX);
-                const dy = Math.abs(endY - startY);
-                const stepX = startX < endX ? 1 : -1;
-                const stepY = startY < endY ? 1 : -1;
-                let err = dx - dy;
-                
-                while (true) {
-                    // Check if current cell has walls
-                    if (x >= 0 && x < maze.cols && y >= 0 && y < maze.rows) {
-                        const cell = maze.grid[y][x];
-                        // If all walls are set, it's a solid obstacle
-                        if (cell.walls.top && cell.walls.bottom && cell.walls.left && cell.walls.right) {
-                            return false;
-                        }
-                    } else {
-                        return false; // Out of bounds
-                    }
-                    
-                    if (x === endX && y === endY) break;
-                    
-                    const err2 = 2 * err;
-                    if (err2 > -dy) {
-                        err -= dy;
-                        x += stepX;
-                    }
-                    if (err2 < dx) {
-                        err += dx;
-                        y += stepY;
-                    }
-                }
-                
-                return true;
-            }
-
             isVisible(player, maze) {
                 const pos = this.getScreenPosition(player, maze);
                 
-                if (Math.abs(pos.relativeAngle) > player.fov / 2) {
+                if (Math.abs(pos.relativeAngle) > player.fovHalf) {
                     return false;
                 }
                 
                 if (pos.dist < 0.5) {
-                    return false;
-                }
-                
-                // Check line of sight for occlusion
-                if (!this.isLineOfSightClear(player, maze)) {
                     return false;
                 }
                 
@@ -671,10 +617,9 @@
                 const spriteWidth = spriteHeight * (this.width / this.height);
                 
                 const screenCenterX = (canvas.width / 2) + 
-                    (pos.relativeAngle / (player.fov / 2)) * (canvas.width / 2);
+                    (pos.relativeAngle / player.fovHalf) * (canvas.width / 2);
                 
-                const pitchOffset = player.pitch * 300;
-                const screenY = canvas.height / 2 + pitchOffset;
+                const screenY = canvas.height / 2 + player.pitchOffset;
                 
                 const spriteLeft = screenCenterX - spriteWidth / 2;
                 const spriteRight = screenCenterX + spriteWidth / 2;
@@ -687,13 +632,15 @@
                 
                 const clampedLeft = Math.max(0, spriteLeft);
                 const clampedRight = Math.min(canvas.width, spriteRight);
+                const clampedTop = Math.max(0, spriteTop);
+                const clampedBottom = Math.min(canvas.height, spriteBottom);
+                const sampleRate = Math.max(1, Math.floor((clampedBottom - clampedTop) / 32));
+                const brightness = Math.max(0.3, 1 - correctedDist / 500);
                 
                 for (let screenX = clampedLeft; screenX < clampedRight; screenX++) {
-                    // Map screen X to ray index for occlusion check
                     const rayIndex = Math.floor((screenX / canvas.width) * player.rayCount);
                     const wallDist = player.wallDistances[rayIndex] || Infinity;
                     
-                    // Skip if wall is closer than sprite
                     if (wallDist < correctedDist) {
                         continue;
                     }
@@ -701,21 +648,14 @@
                     const spriteX = (screenX - spriteLeft) / spriteWidth;
                     const texX = Math.floor(spriteX * this.texture.width);
                     
-                    const clampedTop = Math.max(0, spriteTop);
-                    const clampedBottom = Math.min(canvas.height, spriteBottom);
-                    
-                    const sampleRate = Math.max(1, Math.floor((clampedBottom - clampedTop) / 32));
-                    
                     for (let screenYPos = clampedTop; screenYPos < clampedBottom; screenYPos += sampleRate) {
                         const spriteY = (screenYPos - spriteTop) / spriteHeight;
                         const texY = Math.floor(spriteY * this.texture.height);
                         
-                        const pixelData = this.getTexturePixel(texX, texY);
+                        this.getTexturePixel(texX, texY);
                         
-                        if (pixelData.a > 128) {
-                            let brightness = Math.max(0.3, 1 - correctedDist / 500);
-                            
-                            ctx.fillStyle = `rgba(${Math.floor(pixelData.r * brightness)}, ${Math.floor(pixelData.g * brightness)}, ${Math.floor(pixelData.b * brightness)}, ${pixelData.a / 255})`;
+                        if (this.pixelData.a > 128) {
+                            ctx.fillStyle = `rgba(${Math.floor(this.pixelData.r * brightness)}, ${Math.floor(this.pixelData.g * brightness)}, ${Math.floor(this.pixelData.b * brightness)}, ${this.pixelData.a / 255})`;
                             ctx.fillRect(screenX, screenYPos, 1, sampleRate);
                         }
                     }
@@ -729,16 +669,13 @@
                 const imageData = this.texture.imageData;
                 const index = (Math.floor(y) * this.texture.width + Math.floor(x)) * 4;
                 
-                return {
-                    r: imageData.data[index],
-                    g: imageData.data[index + 1],
-                    b: imageData.data[index + 2],
-                    a: imageData.data[index + 3]
-                };
+                this.pixelData.r = imageData.data[index];
+                this.pixelData.g = imageData.data[index + 1];
+                this.pixelData.b = imageData.data[index + 2];
+                this.pixelData.a = imageData.data[index + 3];
             }
         }
 
-        // Brick texture
         const brickTextureData = [
             0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
             1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
@@ -800,7 +737,6 @@
         const brickTexture = createTextureFromData(brickTextureData);
         const brickPixelData = brickTexture.getContext('2d').getImageData(0, 0, 32, 32).data;
 
-        // Load worker sprite texture
         let workerTexture = null;
 
         const workerImg = new Image();
@@ -977,9 +913,11 @@
                 this.pitch = 0;
                 this.moveSpeed = 3;
                 this.fov = Math.PI / 3;
+                this.fovHalf = this.fov / 2;
                 this.rayCount = 240;
                 this.stripWidth = Math.ceil(nightCanvas.width / this.rayCount);
                 this.wallDistances = new Array(this.rayCount).fill(Infinity);
+                this.pitchOffset = 0;
             }
 
             move(dx, dy, maze) {
@@ -1078,8 +1016,7 @@
 
             render(maze) {
                 const rays = this.castRays(maze);
-                const pitchOffset = this.pitch * 300;
-                const horizonY = nightCanvas.height / 2 + pitchOffset;
+                this.pitchOffset = this.pitch * 300;
                 
                 nightCtx.fillStyle = '#1a1a2e';
                 nightCtx.fillRect(0, 0, nightCanvas.width, nightCanvas.height);
@@ -1095,8 +1032,9 @@
                     const correctedDist = ray.dist * Math.cos(ray.angle - this.angle);
                     const wallHeight = (maze.cellSize * 300) / correctedDist;
                     
-                    // Store wall distance for occlusion culling
-                    this.wallDistances[i] = correctedDist;const wallTop = (nightCanvas.height - wallHeight) / 2 + pitchOffset;
+                    this.wallDistances[i] = correctedDist;
+                    
+                    const wallTop = (nightCanvas.height - wallHeight) / 2 + this.pitchOffset;
                     const wallBottom = wallTop + wallHeight;
                     
                     const stripX = i * this.stripWidth;
@@ -1128,7 +1066,6 @@
             }
         }
 
-        // Game state
         const gameState = {
             resources: 100,
             workers: 0,
@@ -1155,7 +1092,6 @@
         let pointerLocked = false;
         const keys = {};
 
-        // Functions
         function updateProductionUI() {
             const prodSection = document.getElementById('productionSection');
             
@@ -1279,14 +1215,14 @@
             if (keys['a']) player.move(-strafeX, -strafeY, maze);
             if (keys['d']) player.move(strafeX, strafeY, maze);
 
-            // Update workers even during night mode
-            for (const worker of gameState.workerList) {
-                worker.update();
+            if (gameState.workerList.length > 0) {
+                for (const worker of gameState.workerList) {
+                    worker.update();
+                }
             }
 
             player.render(maze);
 
-            // Sync sprite positions with worker positions
             for (let i = 0; i < gameState.nightSprites.length; i++) {
                 if (i < gameState.workerList.length) {
                     const worker = gameState.workerList[i];
@@ -1295,9 +1231,8 @@
                 }
             }
 
-            // Render sprites
-            for (const sprite of gameState.nightSprites) {
-                if (workerTexture) {
+            if (workerTexture) {
+                for (const sprite of gameState.nightSprites) {
                     sprite.render(player, maze, nightCtx, nightCanvas);
                 }
             }
@@ -1307,7 +1242,6 @@
             requestAnimationFrame(nightGameLoop);
         }
 
-        // Event listeners
         document.getElementById('phaseToggle').addEventListener('click', () => {
             if (!gameState.isNight) {
                 gameState.isNight = true;
@@ -1320,7 +1254,6 @@
                 maze = new Maze(gameState.buildings, gameState.mine.gridX, gameState.mine.gridY);
                 player = new Player(2 * maze.cellSize + maze.cellSize / 2, 2 * maze.cellSize + maze.cellSize / 2);
                 
-                // Create sprites for workers
                 gameState.nightSprites = [];
                 for (const worker of gameState.workerList) {
                     const sprite = new Sprite(worker.x, worker.y, workerTexture, 30, 45);
