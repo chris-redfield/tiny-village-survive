@@ -74,11 +74,11 @@
             padding: 20px;
             overflow-y: auto;
             box-shadow: -2px 0 8px rgba(0,0,0,0.1);
-            position: fixed;          /* Add this */
-            right: 0;                 /* Add this */
-            top: 0;                   /* Add this */
-            height: 100vh;            /* Add this */
-            z-index: 50;              /* Add this */
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 50;
         }
 
         h1 {
@@ -300,7 +300,7 @@
                     <span class="stat-value" id="workerCount">0</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-label">⚒️ Warriors</span>
+                    <span class="stat-label">⚔️ Warriors</span>
                     <span class="stat-value" id="warriorCount">0</span>
                 </div>
                 <div class="stat">
@@ -979,6 +979,7 @@
                 let hitWall = false;
                 let hitX = 0;
                 let hitY = 0;
+                let wallType = null;
                 
                 while (!hitWall && dist < maxDist) {
                     dist += step;
@@ -1001,22 +1002,26 @@
                         hitWall = true;
                         hitX = testX;
                         hitY = testY;
+                        wallType = 'horizontal';
                     } else if (localY > maze.cellSize - 1 && cell.walls.bottom) {
                         hitWall = true;
                         hitX = testX;
                         hitY = testY;
+                        wallType = 'horizontal';
                     } else if (localX < 1 && cell.walls.left) {
                         hitWall = true;
                         hitX = testX;
                         hitY = testY;
+                        wallType = 'vertical';
                     } else if (localX > maze.cellSize - 1 && cell.walls.right) {
                         hitWall = true;
                         hitX = testX;
                         hitY = testY;
+                        wallType = 'vertical';
                     }
                 }
                 
-                return { dist, angle, hitX, hitY };
+                return { dist, angle, hitX, hitY, wallType };
             }
 
             render(maze) {
@@ -1044,8 +1049,9 @@
                     
                     const stripX = i * this.stripWidth;
                     
-                    let worldPos = ray.hitY;
-                    let texX = Math.floor((Math.abs(worldPos) * 2)) % 32;
+                    // Use appropriate coordinate based on wall orientation
+                    let texCoord = ray.wallType === 'vertical' ? ray.hitY : ray.hitX;
+                    let texX = Math.floor((Math.abs(texCoord) * 2)) % 32;
                     texX = Math.max(0, Math.min(31, texX));
                     
                     let brightness = Math.max(0.2, 1 - correctedDist / 500);
