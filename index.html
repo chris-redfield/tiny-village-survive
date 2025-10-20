@@ -741,6 +741,32 @@
 
         const brickTexture = createTextureFromData(brickTextureData);
         const brickPixelData = brickTexture.getContext('2d').getImageData(0, 0, 32, 32).data;
+        
+        // Create gray brick texture for border walls
+        function createGrayBrickTexture() {
+            const texCanvas = document.createElement('canvas');
+            texCanvas.width = 32;
+            texCanvas.height = 32;
+            const texCtx = texCanvas.getContext('2d');
+            
+            const imageData = texCtx.createImageData(32, 32);
+            const pixels = imageData.data;
+            
+            for (let i = 0; i < brickTextureData.length; i++) {
+                const pixelIndex = i * 4;
+                const intensity = brickTextureData[i] * 200;
+                
+                pixels[pixelIndex] = intensity * 0.5;
+                pixels[pixelIndex + 1] = intensity * 0.5;
+                pixels[pixelIndex + 2] = intensity * 0.55;
+                pixels[pixelIndex + 3] = 255;
+            }
+            
+            texCtx.putImageData(imageData, 0, 0);
+            return texCanvas.getContext('2d').getImageData(0, 0, 32, 32).data;
+        }
+        
+        const grayBrickPixelData = createGrayBrickTexture();
 
         let workerTexture = null;
 
@@ -808,9 +834,24 @@
                     for (let x = 0; x < this.cols; x++) {
                         this.grid[y][x] = {
                             walls: { top: false, right: false, bottom: false, left: false },
+                            wallTypes: { top: null, right: null, bottom: null, left: null },
                             visited: false
                         };
                     }
+                }
+                
+                // Add border walls
+                for (let x = 0; x < this.cols; x++) {
+                    this.grid[0][x].walls.top = true;
+                    this.grid[0][x].wallTypes.top = 'border';
+                    this.grid[this.rows - 1][x].walls.bottom = true;
+                    this.grid[this.rows - 1][x].wallTypes.bottom = 'border';
+                }
+                for (let y = 0; y < this.rows; y++) {
+                    this.grid[y][0].walls.left = true;
+                    this.grid[y][0].wallTypes.left = 'border';
+                    this.grid[y][this.cols - 1].walls.right = true;
+                    this.grid[y][this.cols - 1].wallTypes.right = 'border';
                 }
             }
 
@@ -828,6 +869,10 @@
                                 this.grid[y][x].walls.right = true;
                                 this.grid[y][x].walls.bottom = true;
                                 this.grid[y][x].walls.left = true;
+                                this.grid[y][x].wallTypes.top = 'structure';
+                                this.grid[y][x].wallTypes.right = 'structure';
+                                this.grid[y][x].wallTypes.bottom = 'structure';
+                                this.grid[y][x].wallTypes.left = 'structure';
                             }
                         }
                     }
@@ -851,6 +896,10 @@
                                 this.grid[y][x].walls.right = true;
                                 this.grid[y][x].walls.bottom = true;
                                 this.grid[y][x].walls.left = true;
+                                this.grid[y][x].wallTypes.top = 'structure';
+                                this.grid[y][x].wallTypes.right = 'structure';
+                                this.grid[y][x].wallTypes.bottom = 'structure';
+                                this.grid[y][x].wallTypes.left = 'structure';
                             }
                         }
                     }
@@ -980,6 +1029,7 @@
                 let hitX = 0;
                 let hitY = 0;
                 let wallType = null;
+                let structureType = null;
                 
                 while (!hitWall && dist < maxDist) {
                     dist += step;
@@ -991,6 +1041,7 @@
                     
                     if (cellX < 0 || cellX >= maze.cols || cellY < 0 || cellY >= maze.rows) {
                         hitWall = true;
+                        structureType = 'border';
                         break;
                     }
                     
@@ -1003,25 +1054,29 @@
                         hitX = testX;
                         hitY = testY;
                         wallType = 'horizontal';
+                        structureType = cell.wallTypes.top;
                     } else if (localY > maze.cellSize - 1 && cell.walls.bottom) {
                         hitWall = true;
                         hitX = testX;
                         hitY = testY;
                         wallType = 'horizontal';
+                        structureType = cell.wallTypes.bottom;
                     } else if (localX < 1 && cell.walls.left) {
                         hitWall = true;
                         hitX = testX;
                         hitY = testY;
                         wallType = 'vertical';
+                        structureType = cell.wallTypes.left;
                     } else if (localX > maze.cellSize - 1 && cell.walls.right) {
                         hitWall = true;
                         hitX = testX;
                         hitY = testY;
                         wallType = 'vertical';
+                        structureType = cell.wallTypes.right;
                     }
                 }
                 
-                return { dist, angle, hitX, hitY, wallType };
+                return { dist, angle, hitX, hitY, wallType, structureType };
             }
 
             render(maze) {
@@ -1056,6 +1111,9 @@
                     
                     let brightness = Math.max(0.2, 1 - correctedDist / 500);
                     
+                    // Choose texture based on wall type
+                    const textureData = ray.structureType === 'border' ? grayBrickPixelData : brickPixelData;
+                    
                     const clampedTop = Math.max(0, Math.floor(wallTop));
                     const clampedBottom = Math.min(nightCanvas.height, Math.ceil(wallBottom));
                     const sampleRate = Math.max(1, Math.floor((clampedBottom - clampedTop) / 32));
@@ -1066,9 +1124,9 @@
                         texY = Math.max(0, Math.min(31, texY));
                         
                         const texIndex = (texY * 32 + texX) * 4;
-                        const r = brickPixelData[texIndex] * brightness;
-                        const g = brickPixelData[texIndex + 1] * brightness;
-                        const b = brickPixelData[texIndex + 2] * brightness;
+                        const r = textureData[texIndex] * brightness;
+                        const g = textureData[texIndex + 1] * brightness;
+                        const b = textureData[texIndex + 2] * brightness;
                         
                         nightCtx.fillStyle = `rgb(${r},${g},${b})`;
                         nightCtx.fillRect(stripX, y, this.stripWidth, sampleRate);
