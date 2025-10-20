@@ -451,6 +451,62 @@
             }
         }
 
+        class Warrior {
+            constructor(startX, startY) {
+                this.x = startX * GRID_SIZE + GRID_SIZE / 2;
+                this.y = startY * GRID_SIZE + GRID_SIZE / 2;
+                this.vx = (Math.random() - 0.5) * 1.6;
+                this.vy = (Math.random() - 0.5) * 1.6;
+                this.speed = 1;
+                this.size = 8;
+            }
+
+            update() {
+                if (Math.random() < 0.03) {
+                    this.vx = (Math.random() - 0.5) * 1.6;
+                    this.vy = (Math.random() - 0.5) * 1.6;
+                }
+
+                let newX = this.x + this.vx * this.speed;
+                let newY = this.y + this.vy * this.speed;
+
+                if (newX < 0 || newX > dayCanvas.width) {
+                    this.vx *= -1;
+                    newX = Math.max(0, Math.min(dayCanvas.width, newX));
+                }
+                if (newY < 0 || newY > dayCanvas.height) {
+                    this.vy *= -1;
+                    newY = Math.max(0, Math.min(dayCanvas.height, newY));
+                }
+
+                this.x = newX;
+                this.y = newY;
+            }
+
+            draw() {
+                dayCtx.fillStyle = '#4a4a4a';
+                dayCtx.strokeStyle = '#2a2a2a';
+                dayCtx.lineWidth = 2;
+
+                dayCtx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+                    const px = this.x + Math.cos(angle) * this.size;
+                    const py = this.y + Math.sin(angle) * this.size;
+                    if (i === 0) dayCtx.moveTo(px, py);
+                    else dayCtx.lineTo(px, py);
+                }
+                dayCtx.closePath();
+                dayCtx.fill();
+                dayCtx.stroke();
+
+                dayCtx.fillStyle = '#c0c0c0';
+                dayCtx.beginPath();
+                dayCtx.arc(this.x, this.y - this.size - 2, this.size * 0.4, 0, Math.PI * 2);
+                dayCtx.fill();
+            }
+        }
+
         class Mine {
             constructor(gridX, gridY) {
                 this.gridX = gridX;
@@ -518,6 +574,11 @@
                         gameState.workers += this.type.productionAmount;
                         for (let i = 0; i < this.type.productionAmount; i++) {
                             gameState.workerList.push(new Worker(this.gridX, this.gridY));
+                        }
+                    } else if (this.type.productionType === 'warrior') {
+                        gameState.warriors += this.type.productionAmount;
+                        for (let i = 0; i < this.type.productionAmount; i++) {
+                            gameState.warriorList.push(new Warrior(this.gridX, this.gridY));
                         }
                     }
                     return true;
@@ -769,6 +830,7 @@
         const grayBrickPixelData = createGrayBrickTexture();
 
         let workerTexture = null;
+        let warriorTexture = null;
 
         const workerImg = new Image();
         workerImg.crossOrigin = 'anonymous';
@@ -791,7 +853,7 @@
                     canvas: canvas
                 };
                 
-                document.getElementById('phaseToggle').disabled = false;
+                checkTexturesLoaded();
                 console.log('Worker texture created successfully');
             } catch (e) {
                 console.error('Error creating texture:', e);
@@ -807,9 +869,54 @@
         workerImg.onabort = () => {
             console.error('Worker sprite loading was aborted');
         };
+
+        const warriorImg = new Image();
+        warriorImg.crossOrigin = 'anonymous';
+        console.log('Starting to load warrior sprite from: assets/warrior.png');
+        warriorImg.src = 'assets/warrior.png';
+        
+        warriorImg.onload = () => {
+            console.log('Warrior image loaded successfully, dimensions:', warriorImg.width, 'x', warriorImg.height);
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = warriorImg.width;
+                canvas.height = warriorImg.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(warriorImg, 0, 0);
+                
+                warriorTexture = {
+                    width: warriorImg.width,
+                    height: warriorImg.height,
+                    imageData: ctx.getImageData(0, 0, warriorImg.width, warriorImg.height),
+                    canvas: canvas
+                };
+                
+                checkTexturesLoaded();
+                console.log('Warrior texture created successfully');
+            } catch (e) {
+                console.error('Error creating warrior texture:', e);
+            }
+        };
+        
+        warriorImg.onerror = (e) => {
+            console.error('Failed to load warrior sprite:', e);
+            console.error('Image URL:', warriorImg.src);
+            console.error('Image currentSrc:', warriorImg.currentSrc);
+        };
+        
+        warriorImg.onabort = () => {
+            console.error('Warrior sprite loading was aborted');
+        };
+        
+        function checkTexturesLoaded() {
+            if (workerTexture && warriorTexture) {
+                document.getElementById('phaseToggle').disabled = false;
+                document.getElementById('phaseToggle').title = '';
+            }
+        }
         
         document.getElementById('phaseToggle').disabled = true;
-        document.getElementById('phaseToggle').title = 'Loading worker sprite...';
+        document.getElementById('phaseToggle').title = 'Loading sprites...';
 
         class Maze {
             constructor(buildingsList, mineGridX, mineGridY) {
@@ -1226,6 +1333,10 @@
                 worker.draw();
             }
 
+            for (const warrior of gameState.warriorList) {
+                warrior.draw();
+            }
+
             if (placingBuilding) {
                 const testBuilding = new Building(placingBuilding, previewPos.x, previewPos.y);
                 const canPlace = testBuilding.canPlace(previewPos.x, previewPos.y);
@@ -1249,6 +1360,10 @@
             
             for (const worker of gameState.workerList) {
                 worker.update();
+            }
+            
+            for (const warrior of gameState.warriorList) {
+                warrior.update();
             }
             
             updateUI();
@@ -1290,17 +1405,31 @@
                 }
             }
 
-            player.render(maze);
-
-            for (let i = 0; i < gameState.nightSprites.length; i++) {
-                if (i < gameState.workerList.length) {
-                    const worker = gameState.workerList[i];
-                    gameState.nightSprites[i].x = worker.x;
-                    gameState.nightSprites[i].y = worker.y;
+            if (gameState.warriorList.length > 0) {
+                for (const warrior of gameState.warriorList) {
+                    warrior.update();
                 }
             }
 
-            if (workerTexture) {
+            player.render(maze);
+
+            for (let i = 0; i < gameState.nightSprites.length; i++) {
+                const sprite = gameState.nightSprites[i];
+                if (sprite.type === 'worker' && i < gameState.workerList.length) {
+                    const worker = gameState.workerList[i];
+                    sprite.x = worker.x;
+                    sprite.y = worker.y;
+                } else if (sprite.type === 'warrior') {
+                    const warriorIndex = i - gameState.workerList.length;
+                    if (warriorIndex >= 0 && warriorIndex < gameState.warriorList.length) {
+                        const warrior = gameState.warriorList[warriorIndex];
+                        sprite.x = warrior.x;
+                        sprite.y = warrior.y;
+                    }
+                }
+            }
+
+            if (workerTexture || warriorTexture) {
                 for (const sprite of gameState.nightSprites) {
                     sprite.render(player, maze, nightCtx, nightCanvas);
                 }
@@ -1324,8 +1453,16 @@
                 player = new Player(2 * maze.cellSize + maze.cellSize / 2, 2 * maze.cellSize + maze.cellSize / 2);
                 
                 gameState.nightSprites = [];
+                
                 for (const worker of gameState.workerList) {
                     const sprite = new Sprite(worker.x, worker.y, workerTexture, 30, 45);
+                    sprite.type = 'worker';
+                    gameState.nightSprites.push(sprite);
+                }
+                
+                for (const warrior of gameState.warriorList) {
+                    const sprite = new Sprite(warrior.x, warrior.y, warriorTexture, 35, 50);
+                    sprite.type = 'warrior';
                     gameState.nightSprites.push(sprite);
                 }
                 
