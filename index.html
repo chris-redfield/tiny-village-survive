@@ -1238,6 +1238,31 @@
                         nightCtx.fillStyle = `rgb(${r},${g},${b})`;
                         nightCtx.fillRect(stripX, y, this.stripWidth, sampleRate);
                     }
+                    
+                    // Add top stripe for border walls
+                    if (ray.structureType === 'border') {
+                        const stripeHeight = wallHeight;
+                        const stripeTop = wallTop - stripeHeight;
+                        const stripeBottom = wallTop;
+                        
+                        const clampedStripeTop = Math.max(0, Math.floor(stripeTop));
+                        const clampedStripeBottom = Math.min(nightCanvas.height, Math.ceil(stripeBottom));
+                        const stripeSampleRate = Math.max(1, Math.floor((clampedStripeBottom - clampedStripeTop) / 32));
+                        
+                        for (let y = clampedStripeTop; y < clampedStripeBottom; y += stripeSampleRate) {
+                            let stripeWorldHeight = ((y - stripeTop) / (stripeBottom - stripeTop)) * maze.cellSize;
+                            let stripeTexY = Math.floor((stripeWorldHeight * 0.5)) % 32;
+                            stripeTexY = Math.max(0, Math.min(31, stripeTexY));
+                            
+                            const stripeTexIndex = (stripeTexY * 32 + texX) * 4;
+                            const r = grayBrickPixelData[stripeTexIndex] * brightness;
+                            const g = grayBrickPixelData[stripeTexIndex + 1] * brightness;
+                            const b = grayBrickPixelData[stripeTexIndex + 2] * brightness;
+                            
+                            nightCtx.fillStyle = `rgb(${r},${g},${b})`;
+                            nightCtx.fillRect(stripX, y, this.stripWidth, stripeSampleRate);
+                        }
+                    }
                 }
             }
         }
