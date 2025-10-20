@@ -1202,8 +1202,8 @@
                 for (let i = 0; i < rays.length; i++) {
                     const ray = rays[i];
                     const correctedDist = ray.dist * Math.cos(ray.angle - this.angle);
-                    const wallHeight = (maze.cellSize * 300) / correctedDist;
-                    
+                    const wallHeight = (maze.cellSize * 600) / correctedDist;
+
                     this.wallDistances[i] = correctedDist;
                     
                     const wallTop = (nightCanvas.height - wallHeight) / 2 + this.pitchOffset;
