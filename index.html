@@ -1203,7 +1203,7 @@
                     const ray = rays[i];
                     const correctedDist = ray.dist * Math.cos(ray.angle - this.angle);
                     const wallHeight = (maze.cellSize * 600) / correctedDist;
-
+                    
                     this.wallDistances[i] = correctedDist;
                     
                     const wallTop = (nightCanvas.height - wallHeight) / 2 + this.pitchOffset;
@@ -1226,8 +1226,8 @@
                     const sampleRate = Math.max(1, Math.floor((clampedBottom - clampedTop) / 32));
                     
                     for (let y = clampedTop; y < clampedBottom; y += sampleRate) {
-                        let worldHeight = ((y - wallTop) / (wallBottom - wallTop)) * maze.cellSize;
-                        let texY = Math.floor((worldHeight * 0.5)) % 32;
+                        let wallProgress = (y - wallTop) / (wallBottom - wallTop);
+                        let texY = Math.floor(wallProgress * 32) % 32;
                         texY = Math.max(0, Math.min(31, texY));
                         
                         const texIndex = (texY * 32 + texX) * 4;
@@ -1250,8 +1250,8 @@
                         const stripeSampleRate = Math.max(1, Math.floor((clampedStripeBottom - clampedStripeTop) / 32));
                         
                         for (let y = clampedStripeTop; y < clampedStripeBottom; y += stripeSampleRate) {
-                            let stripeWorldHeight = ((y - stripeTop) / (stripeBottom - stripeTop)) * maze.cellSize;
-                            let stripeTexY = Math.floor((stripeWorldHeight * 0.5)) % 32;
+                            let stripeProgress = (y - stripeTop) / (stripeBottom - stripeTop);
+                            let stripeTexY = Math.floor(stripeProgress * 32) % 32;
                             stripeTexY = Math.max(0, Math.min(31, stripeTexY));
                             
                             const stripeTexIndex = (stripeTexY * 32 + texX) * 4;
