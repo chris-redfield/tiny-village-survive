@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tiny Village + Night Defense</title>
+    <title>Small Village - 3D Explorer</title>
     <style>
         * {
             margin: 0;
@@ -15,43 +15,18 @@
             font-family: 'Arial', sans-serif;
             background: #1a1a2e;
             display: flex;
+            justify-content: center;
+            align-items: center;
             height: 100vh;
-            color: #2c1810;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
+            color: #fff;
+            overflow: hidden;
         }
 
         .game-container {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
-
-        #dayContainer {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        #nightContainer {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-            z-index: 100;
+            position: relative;
         }
 
         #gameCanvas {
-            flex: 1;
-            background: linear-gradient(180deg, #87ceeb 0%, #90ee90 100%);
-            cursor: crosshair;
-            display: block;
-        }
-
-        #nightCanvas {
             display: block;
             cursor: none;
             image-rendering: pixelated;
@@ -62,183 +37,19 @@
             top: 20px;
             right: 20px;
             border: 2px solid #4a90e2;
-            background: #000;
+            background: rgba(0, 0, 0, 0.8);
             border-radius: 5px;
-            z-index: 20;
         }
 
-        #sidebar {
-            width: 280px;
-            background: #f4e4c1;
-            border-left: 4px solid #8b6914;
-            padding: 20px;
-            overflow-y: auto;
-            box-shadow: -2px 0 8px rgba(0,0,0,0.1);
-            position: fixed;
-            right: 0;
-            top: 0;
-            height: 100vh;
-            z-index: 50;
-        }
-
-        h1 {
-            font-size: 24px;
-            margin-bottom: 15px;
-            color: #654321;
-            text-shadow: 1px 1px 2px rgba(255,255,255,0.7);
-        }
-
-        .stats-panel {
-            background: #ffe8cc;
-            border: 2px solid #cd853f;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 15px;
-        }
-
-        .stat {
-            display: flex;
-            justify-content: space-between;
-            margin: 8px 0;
-            font-weight: bold;
-        }
-
-        .stat-label {
-            color: #8b4513;
-        }
-
-        .stat-value {
-            color: #2d5016;
-            font-size: 18px;
-        }
-
-        .time-display {
-            background: #ffd700;
-            border: 2px solid #ffa500;
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 15px;
-            text-align: center;
-            font-weight: bold;
-            color: #654321;
-        }
-
-        .phase-button {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: white;
-            font-size: 14px;
-            background: linear-gradient(135deg, #1a1a2e 0%, #2d3561 100%);
-        }
-
-        .phase-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .buildings-section {
-            margin-top: 20px;
-        }
-
-        .section-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #654321;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .building-btn {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: white;
-            font-size: 14px;
-        }
-
-        .building-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .building-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .town-hall-btn {
-            background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
-        }
-
-        .barracks-btn {
-            background: linear-gradient(135deg, #696969 0%, #808080 100%);
-        }
-
-        .info-box {
-            background: #fff8dc;
-            border: 2px solid #daa520;
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 10px;
-            font-size: 12px;
-            color: #654321;
-        }
-
-        .production-section {
-            background: #fff8dc;
-            border: 2px solid #daa520;
-            border-radius: 6px;
-            padding: 12px;
-            margin-top: 20px;
-        }
-
-        .produce-btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #32cd32 0%, #228b22 100%);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 8px;
-        }
-
-        .produce-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .produce-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        #nightUI {
+        #ui {
             position: absolute;
             top: 20px;
             left: 20px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0, 0, 0, 0.7);
             padding: 15px;
             border-radius: 8px;
             font-size: 14px;
-            z-index: 10;
-            color: #eee;
             font-family: 'Courier New', monospace;
-            display: none;
         }
 
         #crosshair {
@@ -250,1322 +61,857 @@
             font-size: 24px;
             pointer-events: none;
             text-shadow: 0 0 5px #000;
-            z-index: 5;
-            display: none;
         }
 
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #e8dcc8;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #cd853f;
-            border-radius: 4px;
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <div id="dayContainer">
-            <canvas id="gameCanvas"></canvas>
+        <canvas id="gameCanvas"></canvas>
+        <canvas id="minimapCanvas"></canvas>
+        <div id="ui">
+            <div>Village Explorer</div>
+            <div id="posInfo">Position: (0, 0)</div>
+            <div id="fpsInfo">FPS: 0</div>
         </div>
-
-        <div id="nightContainer">
-            <canvas id="nightCanvas"></canvas>
-            <canvas id="minimapCanvas"></canvas>
-            <div id="nightUI">
-                <div>Night Defense Mode</div>
-                <div>WASD - Move | Mouse - Look</div>
-            </div>
-            <div id="crosshair">+</div>
-        </div>
-
-        <div id="sidebar">
-            <h1>🏘️ Tiny Village</h1>
-            
-            <button class="phase-button" id="phaseToggle">Start Night</button>
-            
-            <div class="time-display">
-                <div id="dayDisplay">Day Phase</div>
-                <div style="font-size: 12px; margin-top: 5px; opacity: 0.8;" id="timeUntilNight">Time: 0s / 120s</div>
-            </div>
-
-            <div class="stats-panel">
-                <div class="stat">
-                    <span class="stat-label">👷 Workers</span>
-                    <span class="stat-value" id="workerCount">0</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">⚔️ Warriors</span>
-                    <span class="stat-value" id="warriorCount">0</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">💰 Resources</span>
-                    <span class="stat-value" id="resourceCount">100</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">👥 Population</span>
-                    <span class="stat-value" id="popCount">0</span>
-                </div>
-            </div>
-
-            <div class="buildings-section">
-                <div class="section-title">Buildings</div>
-                
-                <button class="building-btn town-hall-btn" id="townHallBtn">
-                    🏛️ Town Hall
-                    <div style="font-size: 11px; opacity: 0.9; margin-top: 3px;">Cost: 50</div>
-                </button>
-                <div class="info-box">
-                    <div style="font-weight: bold; margin-bottom: 5px;">Town Hall</div>
-                    <div>Produces workers</div>
-                </div>
-
-                <button class="building-btn barracks-btn" id="barracksBtn">
-                    🛡️ Barracks
-                    <div style="font-size: 11px; opacity: 0.9; margin-top: 3px;">Cost: 80</div>
-                </button>
-                <div class="info-box">
-                    <div style="font-weight: bold; margin-bottom: 5px;">Barracks</div>
-                    <div>Produces warriors</div>
-                </div>
-            </div>
-
-            <div id="productionSection" class="production-section" style="display: none;">
-                <div style="font-weight: bold; color: #654321; margin-bottom: 10px; font-size: 14px;" id="selectedBuildingName">Building Selected</div>
-                <button class="produce-btn" id="produceBtn">Produce Unit</button>
-                <button style="width: 100%; padding: 8px; background: #d3d3d3; color: #654321; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px;" id="cancelSelectionBtn">Deselect</button>
-            </div>
+        <div id="crosshair">+</div>
+        <div id="instructions">
+            WASD/Arrows - Move | A/D - Strafe | Q/E - Look up/down | Click for mouse look
         </div>
     </div>
 
     <script>
-        const DAY_CANVAS_WIDTH = 1120;
-        const DAY_CANVAS_HEIGHT = 900;
-        const NIGHT_CANVAS_WIDTH = 1400;
-        const NIGHT_CANVAS_HEIGHT = 900;
-        
-        const dayCanvas = document.getElementById('gameCanvas');
-        const dayCtx = dayCanvas.getContext('2d');
-        
-        const dayContainer = document.getElementById('dayContainer');
-        dayCanvas.width = dayContainer.clientWidth;
-        dayCanvas.height = dayContainer.clientHeight;
-
-        const nightCanvas = document.getElementById('nightCanvas');
-        const nightCtx = nightCanvas.getContext('2d');
-        nightCanvas.width = NIGHT_CANVAS_WIDTH;
-        nightCanvas.height = NIGHT_CANVAS_HEIGHT;
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 1200;
+        canvas.height = 800;
 
         const minimapCanvas = document.getElementById('minimapCanvas');
         const minimapCtx = minimapCanvas.getContext('2d');
-        minimapCanvas.width = 200;
-        minimapCanvas.height = 200;
+        minimapCanvas.width = 250;
+        minimapCanvas.height = 250;
 
-        const GRID_SIZE = 40;
-        const MAZE_CELL_SIZE = 40;
-        
-        const COLS = Math.floor(DAY_CANVAS_WIDTH / GRID_SIZE);
-        const ROWS = Math.floor(DAY_CANVAS_HEIGHT / GRID_SIZE);
+        // World settings
+        const WORLD_SIZE = 2000;
+        const CELL_SIZE = 40;
 
+        // Building definitions with heights
         const BUILDING_TYPES = {
-            TOWN_HALL: {
-                name: 'Town Hall',
-                cost: 50,
-                width: 2,
-                height: 2,
-                color: '#8b4513',
-                productionType: 'worker',
-                productionCost: 20,
-                productionAmount: 1
+            HOUSE: {
+                name: 'House',
+                wallHeight: 60,
+                roofHeight: 30,
+                roofType: 'peaked',
+                wallColor: { r: 180, g: 140, b: 100 },
+                roofColor: { r: 139, g: 69, b: 19 }
             },
-            BARRACKS: {
-                name: 'Barracks',
-                cost: 80,
-                width: 2,
-                height: 2,
-                color: '#696969',
-                productionType: 'warrior',
-                productionCost: 30,
-                productionAmount: 1
+            TOWER: {
+                name: 'Tower',
+                wallHeight: 120,
+                roofHeight: 40,
+                roofType: 'peaked',
+                wallColor: { r: 120, g: 120, b: 130 },
+                roofColor: { r: 80, g: 80, b: 90 }
+            },
+            BARN: {
+                name: 'Barn',
+                wallHeight: 50,
+                roofHeight: 35,
+                roofType: 'peaked',
+                wallColor: { r: 160, g: 82, b: 45 },
+                roofColor: { r: 100, g: 50, b: 30 }
+            },
+            WELL: {
+                name: 'Well',
+                wallHeight: 25,
+                roofHeight: 15,
+                roofType: 'flat',
+                wallColor: { r: 100, g: 100, b: 110 },
+                roofColor: { r: 80, g: 60, b: 40 }
+            },
+            CHURCH: {
+                name: 'Church',
+                wallHeight: 90,
+                roofHeight: 50,
+                roofType: 'peaked',
+                wallColor: { r: 200, g: 200, b: 210 },
+                roofColor: { r: 60, g: 60, b: 70 }
+            },
+            FENCE: {
+                name: 'Fence',
+                wallHeight: 20,
+                roofHeight: 0,
+                roofType: 'none',
+                wallColor: { r: 139, g: 90, b: 43 },
+                roofColor: { r: 0, g: 0, b: 0 }
             }
         };
 
-        class Worker {
-            constructor(startX, startY) {
-                this.x = startX * GRID_SIZE + GRID_SIZE / 2;
-                this.y = startY * GRID_SIZE + GRID_SIZE / 2;
-                this.vx = (Math.random() - 0.5) * 1.6;
-                this.vy = (Math.random() - 0.5) * 1.6;
-                this.speed = 1;
-                this.size = 6;
-            }
+        // Village buildings - expanded village
+        const buildings = [
+            // === MAIN VILLAGE CENTER ===
+            // Central tower/watchtower
+            { type: BUILDING_TYPES.TOWER, x: 950, y: 950, width: 60, depth: 60 },
 
-            update() {
-                if (Math.random() < 0.03) {
-                    this.vx = (Math.random() - 0.5) * 1.6;
-                    this.vy = (Math.random() - 0.5) * 1.6;
-                }
+            // Church near center
+            { type: BUILDING_TYPES.CHURCH, x: 800, y: 850, width: 80, depth: 120 },
 
-                let newX = this.x + this.vx * this.speed;
-                let newY = this.y + this.vy * this.speed;
+            // Central well
+            { type: BUILDING_TYPES.WELL, x: 1050, y: 980, width: 35, depth: 35 },
 
-                if (newX < 0 || newX > dayCanvas.width) {
-                    this.vx *= -1;
-                    newX = Math.max(0, Math.min(dayCanvas.width, newX));
-                }
-                if (newY < 0 || newY > dayCanvas.height) {
-                    this.vy *= -1;
-                    newY = Math.max(0, Math.min(dayCanvas.height, newY));
-                }
+            // === RESIDENTIAL DISTRICT (Northwest) ===
+            { type: BUILDING_TYPES.HOUSE, x: 300, y: 300, width: 80, depth: 60 },
+            { type: BUILDING_TYPES.HOUSE, x: 450, y: 280, width: 70, depth: 70 },
+            { type: BUILDING_TYPES.HOUSE, x: 600, y: 320, width: 75, depth: 65 },
+            { type: BUILDING_TYPES.HOUSE, x: 320, y: 450, width: 65, depth: 75 },
+            { type: BUILDING_TYPES.HOUSE, x: 480, y: 420, width: 80, depth: 60 },
+            { type: BUILDING_TYPES.HOUSE, x: 640, y: 480, width: 70, depth: 70 },
+            { type: BUILDING_TYPES.HOUSE, x: 280, y: 600, width: 75, depth: 65 },
+            { type: BUILDING_TYPES.HOUSE, x: 450, y: 580, width: 60, depth: 80 },
 
-                this.x = newX;
-                this.y = newY;
-            }
+            // === RESIDENTIAL DISTRICT (Northeast) ===
+            { type: BUILDING_TYPES.HOUSE, x: 1200, y: 300, width: 80, depth: 65 },
+            { type: BUILDING_TYPES.HOUSE, x: 1350, y: 280, width: 70, depth: 70 },
+            { type: BUILDING_TYPES.HOUSE, x: 1500, y: 350, width: 75, depth: 60 },
+            { type: BUILDING_TYPES.HOUSE, x: 1180, y: 450, width: 65, depth: 75 },
+            { type: BUILDING_TYPES.HOUSE, x: 1380, y: 420, width: 80, depth: 70 },
+            { type: BUILDING_TYPES.HOUSE, x: 1550, y: 500, width: 70, depth: 65 },
 
-            draw() {
-                dayCtx.fillStyle = '#8b7355';
-                dayCtx.strokeStyle = '#5c4033';
-                dayCtx.lineWidth = 2;
+            // === RESIDENTIAL DISTRICT (Southwest) ===
+            { type: BUILDING_TYPES.HOUSE, x: 300, y: 1200, width: 75, depth: 70 },
+            { type: BUILDING_TYPES.HOUSE, x: 480, y: 1180, width: 70, depth: 65 },
+            { type: BUILDING_TYPES.HOUSE, x: 280, y: 1350, width: 80, depth: 60 },
+            { type: BUILDING_TYPES.HOUSE, x: 450, y: 1380, width: 65, depth: 75 },
+            { type: BUILDING_TYPES.HOUSE, x: 620, y: 1300, width: 70, depth: 70 },
 
-                dayCtx.beginPath();
-                for (let i = 0; i < 5; i++) {
-                    const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-                    const px = this.x + Math.cos(angle) * this.size;
-                    const py = this.y + Math.sin(angle) * this.size;
-                    if (i === 0) dayCtx.moveTo(px, py);
-                    else dayCtx.lineTo(px, py);
-                }
-                dayCtx.closePath();
-                dayCtx.fill();
-                dayCtx.stroke();
+            // === RESIDENTIAL DISTRICT (Southeast) ===
+            { type: BUILDING_TYPES.HOUSE, x: 1250, y: 1200, width: 75, depth: 65 },
+            { type: BUILDING_TYPES.HOUSE, x: 1420, y: 1250, width: 70, depth: 70 },
+            { type: BUILDING_TYPES.HOUSE, x: 1580, y: 1180, width: 65, depth: 75 },
+            { type: BUILDING_TYPES.HOUSE, x: 1300, y: 1380, width: 80, depth: 60 },
+            { type: BUILDING_TYPES.HOUSE, x: 1500, y: 1400, width: 70, depth: 70 },
 
-                dayCtx.fillStyle = '#f4a460';
-                dayCtx.beginPath();
-                dayCtx.arc(this.x, this.y - this.size - 2, this.size * 0.4, 0, Math.PI * 2);
-                dayCtx.fill();
-            }
-        }
+            // === MARKET/COMMERCIAL AREA (East of center) ===
+            { type: BUILDING_TYPES.HOUSE, x: 1150, y: 800, width: 90, depth: 70 },
+            { type: BUILDING_TYPES.HOUSE, x: 1150, y: 920, width: 85, depth: 65 },
+            { type: BUILDING_TYPES.HOUSE, x: 1150, y: 1040, width: 80, depth: 70 },
+            { type: BUILDING_TYPES.WELL, x: 1280, y: 900, width: 30, depth: 30 },
+            { type: BUILDING_TYPES.WELL, x: 1280, y: 1000, width: 30, depth: 30 },
 
-        class Warrior {
-            constructor(startX, startY) {
-                this.x = startX * GRID_SIZE + GRID_SIZE / 2;
-                this.y = startY * GRID_SIZE + GRID_SIZE / 2;
-                this.vx = (Math.random() - 0.5) * 1.6;
-                this.vy = (Math.random() - 0.5) * 1.6;
-                this.speed = 1;
-                this.size = 8;
-            }
+            // === FARM AREA (Far East) - with fenced enclosure ===
+            { type: BUILDING_TYPES.BARN, x: 1650, y: 800, width: 120, depth: 80 },
+            { type: BUILDING_TYPES.BARN, x: 1650, y: 950, width: 100, depth: 70 },
+            { type: BUILDING_TYPES.HOUSE, x: 1800, y: 780, width: 70, depth: 60 }, // Farmhouse
 
-            update() {
-                if (Math.random() < 0.03) {
-                    this.vx = (Math.random() - 0.5) * 1.6;
-                    this.vy = (Math.random() - 0.5) * 1.6;
-                }
+            // Farm fencing (partial enclosure)
+            { type: BUILDING_TYPES.FENCE, x: 1600, y: 750, width: 300, depth: 8 },  // North fence
+            { type: BUILDING_TYPES.FENCE, x: 1600, y: 750, width: 8, depth: 320 },  // West fence
+            { type: BUILDING_TYPES.FENCE, x: 1600, y: 1062, width: 300, depth: 8 }, // South fence
+            { type: BUILDING_TYPES.FENCE, x: 1892, y: 750, width: 8, depth: 320 },  // East fence
 
-                let newX = this.x + this.vx * this.speed;
-                let newY = this.y + this.vy * this.speed;
+            // === SECOND FARM (Far South) ===
+            { type: BUILDING_TYPES.BARN, x: 850, y: 1550, width: 110, depth: 75 },
+            { type: BUILDING_TYPES.BARN, x: 1000, y: 1580, width: 90, depth: 65 },
+            { type: BUILDING_TYPES.HOUSE, x: 950, y: 1450, width: 65, depth: 60 }, // Farmhouse
 
-                if (newX < 0 || newX > dayCanvas.width) {
-                    this.vx *= -1;
-                    newX = Math.max(0, Math.min(dayCanvas.width, newX));
-                }
-                if (newY < 0 || newY > dayCanvas.height) {
-                    this.vy *= -1;
-                    newY = Math.max(0, Math.min(dayCanvas.height, newY));
-                }
+            // Small animal pen fencing
+            { type: BUILDING_TYPES.FENCE, x: 1100, y: 1520, width: 120, depth: 8 },
+            { type: BUILDING_TYPES.FENCE, x: 1100, y: 1520, width: 8, depth: 150 },
+            { type: BUILDING_TYPES.FENCE, x: 1100, y: 1662, width: 120, depth: 8 },
+            { type: BUILDING_TYPES.FENCE, x: 1212, y: 1520, width: 8, depth: 150 },
 
-                this.x = newX;
-                this.y = newY;
-            }
+            // === OUTPOST/WATCHTOWERS ===
+            { type: BUILDING_TYPES.TOWER, x: 200, y: 200, width: 50, depth: 50 },   // Northwest
+            { type: BUILDING_TYPES.TOWER, x: 1750, y: 200, width: 50, depth: 50 },  // Northeast
+            { type: BUILDING_TYPES.TOWER, x: 200, y: 1750, width: 50, depth: 50 },  // Southwest
+            { type: BUILDING_TYPES.TOWER, x: 1750, y: 1750, width: 50, depth: 50 }, // Southeast
 
-            draw() {
-                dayCtx.fillStyle = '#4a4a4a';
-                dayCtx.strokeStyle = '#2a2a2a';
-                dayCtx.lineWidth = 2;
+            // === ADDITIONAL WELLS scattered around ===
+            { type: BUILDING_TYPES.WELL, x: 550, y: 350, width: 28, depth: 28 },
+            { type: BUILDING_TYPES.WELL, x: 1400, y: 550, width: 28, depth: 28 },
+            { type: BUILDING_TYPES.WELL, x: 400, y: 1280, width: 28, depth: 28 },
+            { type: BUILDING_TYPES.WELL, x: 1450, y: 1320, width: 28, depth: 28 },
 
-                dayCtx.beginPath();
-                for (let i = 0; i < 5; i++) {
-                    const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-                    const px = this.x + Math.cos(angle) * this.size;
-                    const py = this.y + Math.sin(angle) * this.size;
-                    if (i === 0) dayCtx.moveTo(px, py);
-                    else dayCtx.lineTo(px, py);
-                }
-                dayCtx.closePath();
-                dayCtx.fill();
-                dayCtx.stroke();
+            // === SMALL GARDEN with fence (near center-west) ===
+            { type: BUILDING_TYPES.FENCE, x: 650, y: 850, width: 100, depth: 8 },
+            { type: BUILDING_TYPES.FENCE, x: 650, y: 850, width: 8, depth: 100 },
+            { type: BUILDING_TYPES.FENCE, x: 650, y: 942, width: 100, depth: 8 },
+            { type: BUILDING_TYPES.FENCE, x: 742, y: 850, width: 8, depth: 100 },
 
-                dayCtx.fillStyle = '#c0c0c0';
-                dayCtx.beginPath();
-                dayCtx.arc(this.x, this.y - this.size - 2, this.size * 0.4, 0, Math.PI * 2);
-                dayCtx.fill();
-            }
-        }
+            // === ADDITIONAL CHURCHES/CHAPELS ===
+            { type: BUILDING_TYPES.CHURCH, x: 1400, y: 700, width: 70, depth: 100 },
 
-        class Mine {
-            constructor(gridX, gridY) {
-                this.gridX = gridX;
-                this.gridY = gridY;
-                this.size = 1.5;
-            }
-
-            draw() {
-                const centerX = this.gridX * GRID_SIZE;
-                const centerY = this.gridY * GRID_SIZE;
-                const size = this.size * GRID_SIZE;
-
-                dayCtx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-                dayCtx.beginPath();
-                dayCtx.arc(centerX + 2, centerY + 2, size + 2, 0, Math.PI * 2);
-                dayCtx.fill();
-
-                dayCtx.fillStyle = '#4a4a4a';
-                dayCtx.strokeStyle = '#2a2a2a';
-                dayCtx.lineWidth = 3;
-                
-                dayCtx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    const angle = (i * Math.PI) / 3 - Math.PI / 2;
-                    const x = centerX + Math.cos(angle) * size;
-                    const y = centerY + Math.sin(angle) * size;
-                    if (i === 0) dayCtx.moveTo(x, y);
-                    else dayCtx.lineTo(x, y);
-                }
-                dayCtx.closePath();
-                dayCtx.fill();
-                dayCtx.stroke();
-
-                dayCtx.fillStyle = 'rgba(255, 200, 0, 0.6)';
-                dayCtx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    const angle = (i * Math.PI) / 3 - Math.PI / 2;
-                    const x = centerX + Math.cos(angle) * (size * 0.6);
-                    const y = centerY + Math.sin(angle) * (size * 0.6);
-                    if (i === 0) dayCtx.moveTo(x, y);
-                    else dayCtx.lineTo(x, y);
-                }
-                dayCtx.closePath();
-                dayCtx.fill();
-
-                dayCtx.fillStyle = '#ffff99';
-                dayCtx.beginPath();
-                dayCtx.arc(centerX, centerY, size * 0.2, 0, Math.PI * 2);
-                dayCtx.fill();
-            }
-        }
-
-        class Building {
-            constructor(type, gridX, gridY) {
-                this.type = type;
-                this.gridX = gridX;
-                this.gridY = gridY;
-            }
-
-            produce() {
-                if (gameState.resources >= this.type.productionCost) {
-                    gameState.resources -= this.type.productionCost;
-                    
-                    if (this.type.productionType === 'worker') {
-                        gameState.workers += this.type.productionAmount;
-                        for (let i = 0; i < this.type.productionAmount; i++) {
-                            gameState.workerList.push(new Worker(this.gridX, this.gridY));
-                        }
-                    } else if (this.type.productionType === 'warrior') {
-                        gameState.warriors += this.type.productionAmount;
-                        for (let i = 0; i < this.type.productionAmount; i++) {
-                            gameState.warriorList.push(new Warrior(this.gridX, this.gridY));
-                        }
-                    }
-                    return true;
-                }
-                return false;
-            }
-
-            isPointInside(gridX, gridY) {
-                return gridX >= this.gridX && gridX < this.gridX + this.type.width &&
-                       gridY >= this.gridY && gridY < this.gridY + this.type.height;
-            }
-
-            draw() {
-                const x = this.gridX * GRID_SIZE;
-                const y = this.gridY * GRID_SIZE;
-                const w = this.type.width * GRID_SIZE;
-                const h = this.type.height * GRID_SIZE;
-                const isSelected = gameState.selectedBuilding === this;
-
-                dayCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-                dayCtx.fillRect(x + 3, y + 3, w, h);
-
-                dayCtx.fillStyle = this.type.color;
-                dayCtx.fillRect(x, y, w, h);
-
-                dayCtx.strokeStyle = isSelected ? '#ffd700' : '#5c3d2e';
-                dayCtx.lineWidth = isSelected ? 5 : 3;
-                dayCtx.strokeRect(x, y, w, h);
-
-                dayCtx.fillStyle = '#a0522d';
-                dayCtx.fillRect(x + 5, y + 5, w - 10, 8);
-            }
-
-            canPlace(gridX, gridY) {
-                if (gridX + this.type.width > COLS || gridY + this.type.height > ROWS) {
-                    return false;
-                }
-
-                for (const building of gameState.buildings) {
-                    if (!(gridX + this.type.width <= building.gridX ||
-                          gridX >= building.gridX + building.type.width ||
-                          gridY + this.type.height <= building.gridY ||
-                          gridY >= building.gridY + building.type.height)) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-        }
-
-        class Sprite {
-            constructor(x, y, texture, width = 40, height = 60) {
-                this.x = x;
-                this.y = y;
-                this.texture = texture;
-                this.width = width;
-                this.height = height;
-                this.pixelData = { r: 0, g: 0, b: 0, a: 0 };
-            }
-
-            getScreenPosition(player, maze) {
-                const dx = this.x - player.x;
-                const dy = this.y - player.y;
-                
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                const angle = Math.atan2(dy, dx);
-                
-                let relativeAngle = angle - player.angle;
-                
-                while (relativeAngle > Math.PI) relativeAngle -= Math.PI * 2;
-                while (relativeAngle < -Math.PI) relativeAngle += Math.PI * 2;
-                
-                return { dx, dy, dist, angle, relativeAngle };
-            }
-
-            isVisible(player, maze) {
-                const pos = this.getScreenPosition(player, maze);
-                
-                if (Math.abs(pos.relativeAngle) > player.fovHalf) {
-                    return false;
-                }
-                
-                if (pos.dist < 0.5) {
-                    return false;
-                }
-                
-                return true;
-            }
-
-            render(player, maze, ctx, canvas) {
-                if (!this.isVisible(player, maze)) {
-                    return;
-                }
-
-                const pos = this.getScreenPosition(player, maze);
-                const correctedDist = pos.dist * Math.cos(pos.relativeAngle);
-                
-                if (correctedDist <= 0) return;
-                
-                const spriteHeight = (maze.cellSize * 300) / correctedDist;
-                const spriteWidth = spriteHeight * (this.width / this.height);
-                
-                const screenCenterX = (canvas.width / 2) + 
-                    (pos.relativeAngle / player.fovHalf) * (canvas.width / 2);
-                
-                const screenY = canvas.height / 2 + player.pitchOffset;
-                
-                const spriteLeft = screenCenterX - spriteWidth / 2;
-                const spriteRight = screenCenterX + spriteWidth / 2;
-                const spriteTop = screenY - spriteHeight / 2;
-                const spriteBottom = screenY + spriteHeight / 2;
-                
-                if (spriteRight < 0 || spriteLeft > canvas.width) {
-                    return;
-                }
-                
-                const clampedLeft = Math.max(0, spriteLeft);
-                const clampedRight = Math.min(canvas.width, spriteRight);
-                const clampedTop = Math.max(0, spriteTop);
-                const clampedBottom = Math.min(canvas.height, spriteBottom);
-                const sampleRate = Math.max(1, Math.floor((clampedBottom - clampedTop) / 32));
-                const brightness = Math.max(0.3, 1 - correctedDist / 500);
-                
-                for (let screenX = clampedLeft; screenX < clampedRight; screenX++) {
-                    const rayIndex = Math.floor((screenX / canvas.width) * player.rayCount);
-                    const wallDist = player.wallDistances[rayIndex] || Infinity;
-                    
-                    if (wallDist < correctedDist) {
-                        continue;
-                    }
-                    
-                    const spriteX = (screenX - spriteLeft) / spriteWidth;
-                    const texX = Math.floor(spriteX * this.texture.width);
-                    
-                    for (let screenYPos = clampedTop; screenYPos < clampedBottom; screenYPos += sampleRate) {
-                        const spriteY = (screenYPos - spriteTop) / spriteHeight;
-                        const texY = Math.floor(spriteY * this.texture.height);
-                        
-                        this.getTexturePixel(texX, texY);
-                        
-                        if (this.pixelData.a > 128) {
-                            ctx.fillStyle = `rgba(${Math.floor(this.pixelData.r * brightness)}, ${Math.floor(this.pixelData.g * brightness)}, ${Math.floor(this.pixelData.b * brightness)}, ${this.pixelData.a / 255})`;
-                            ctx.fillRect(screenX, screenYPos, 1, sampleRate);
-                        }
-                    }
-                }
-            }
-
-            getTexturePixel(x, y) {
-                x = Math.max(0, Math.min(x, this.texture.width - 1));
-                y = Math.max(0, Math.min(y, this.texture.height - 1));
-                
-                const imageData = this.texture.imageData;
-                const index = (Math.floor(y) * this.texture.width + Math.floor(x)) * 4;
-                
-                this.pixelData.r = imageData.data[index];
-                this.pixelData.g = imageData.data[index + 1];
-                this.pixelData.b = imageData.data[index + 2];
-                this.pixelData.a = imageData.data[index + 3];
-            }
-        }
-
-        const brickTextureData = [
-            0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
-            0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
-            0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1,
-            0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
-            0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0, 0,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,0,
-            0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0
+            // === STORAGE BUILDINGS ===
+            { type: BUILDING_TYPES.BARN, x: 580, y: 700, width: 60, depth: 50 },
+            { type: BUILDING_TYPES.BARN, x: 1350, y: 1100, width: 70, depth: 55 },
         ];
 
-        function createTextureFromData(data) {
-            const texCanvas = document.createElement('canvas');
-            texCanvas.width = 32;
-            texCanvas.height = 32;
-            const texCtx = texCanvas.getContext('2d');
-            
-            const imageData = texCtx.createImageData(32, 32);
-            const pixels = imageData.data;
-            
-            for (let i = 0; i < data.length; i++) {
-                const pixelIndex = i * 4;
-                const intensity = data[i] * 255;
-                
-                pixels[pixelIndex] = intensity * 0.7;
-                pixels[pixelIndex + 1] = intensity * 0.3;
-                pixels[pixelIndex + 2] = intensity * 0.2;
-                pixels[pixelIndex + 3] = 255;
-            }
-            
-            texCtx.putImageData(imageData, 0, 0);
-            return texCanvas;
-        }
-
-        const brickTexture = createTextureFromData(brickTextureData);
-        const brickPixelData = brickTexture.getContext('2d').getImageData(0, 0, 32, 32).data;
-        
-        // Create gray brick texture for border walls
-        function createGrayBrickTexture() {
-            const texCanvas = document.createElement('canvas');
-            texCanvas.width = 32;
-            texCanvas.height = 32;
-            const texCtx = texCanvas.getContext('2d');
-            
-            const imageData = texCtx.createImageData(32, 32);
-            const pixels = imageData.data;
-            
-            for (let i = 0; i < brickTextureData.length; i++) {
-                const pixelIndex = i * 4;
-                const intensity = brickTextureData[i] * 200;
-                
-                pixels[pixelIndex] = intensity * 0.5;
-                pixels[pixelIndex + 1] = intensity * 0.5;
-                pixels[pixelIndex + 2] = intensity * 0.55;
-                pixels[pixelIndex + 3] = 255;
-            }
-            
-            texCtx.putImageData(imageData, 0, 0);
-            return texCanvas.getContext('2d').getImageData(0, 0, 32, 32).data;
-        }
-        
-        const grayBrickPixelData = createGrayBrickTexture();
-
-        let workerTexture = null;
-        let warriorTexture = null;
-
-        const workerImg = new Image();
-        workerImg.crossOrigin = 'anonymous';
-        console.log('Starting to load worker sprite from: assets/worker.png');
-        workerImg.src = 'assets/worker.png';
-        
-        workerImg.onload = () => {
-            console.log('Worker image loaded successfully, dimensions:', workerImg.width, 'x', workerImg.height);
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = workerImg.width;
-                canvas.height = workerImg.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(workerImg, 0, 0);
-                
-                workerTexture = {
-                    width: workerImg.width,
-                    height: workerImg.height,
-                    imageData: ctx.getImageData(0, 0, workerImg.width, workerImg.height),
-                    canvas: canvas
-                };
-                
-                checkTexturesLoaded();
-                console.log('Worker texture created successfully');
-            } catch (e) {
-                console.error('Error creating texture:', e);
-            }
-        };
-        
-        workerImg.onerror = (e) => {
-            console.error('Failed to load worker sprite:', e);
-            console.error('Image URL:', workerImg.src);
-            console.error('Image currentSrc:', workerImg.currentSrc);
-        };
-        
-        workerImg.onabort = () => {
-            console.error('Worker sprite loading was aborted');
+        // Player
+        const player = {
+            x: 1000,
+            y: 700,
+            z: 30, // Eye height
+            angle: Math.PI / 2,
+            pitch: 0,
+            moveSpeed: 4,
+            fov: Math.PI / 3,
+            rayCount: 400
         };
 
-        const warriorImg = new Image();
-        warriorImg.crossOrigin = 'anonymous';
-        console.log('Starting to load warrior sprite from: assets/warrior.png');
-        warriorImg.src = 'assets/warrior.png';
-        
-        warriorImg.onload = () => {
-            console.log('Warrior image loaded successfully, dimensions:', warriorImg.width, 'x', warriorImg.height);
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = warriorImg.width;
-                canvas.height = warriorImg.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(warriorImg, 0, 0);
-                
-                warriorTexture = {
-                    width: warriorImg.width,
-                    height: warriorImg.height,
-                    imageData: ctx.getImageData(0, 0, warriorImg.width, warriorImg.height),
-                    canvas: canvas
-                };
-                
-                checkTexturesLoaded();
-                console.log('Warrior texture created successfully');
-            } catch (e) {
-                console.error('Error creating warrior texture:', e);
-            }
-        };
-        
-        warriorImg.onerror = (e) => {
-            console.error('Failed to load warrior sprite:', e);
-            console.error('Image URL:', warriorImg.src);
-            console.error('Image currentSrc:', warriorImg.currentSrc);
-        };
-        
-        warriorImg.onabort = () => {
-            console.error('Warrior sprite loading was aborted');
-        };
-        
-        function checkTexturesLoaded() {
-            if (workerTexture && warriorTexture) {
-                document.getElementById('phaseToggle').disabled = false;
-                document.getElementById('phaseToggle').title = '';
-            }
-        }
-        
-        document.getElementById('phaseToggle').disabled = true;
-        document.getElementById('phaseToggle').title = 'Loading sprites...';
-
-        class Maze {
-            constructor(buildingsList, mineGridX, mineGridY) {
-                this.cellSize = MAZE_CELL_SIZE;
-                this.buildings = buildingsList;
-                this.dayGridSize = GRID_SIZE;
-                this.mineGridX = mineGridX;
-                this.mineGridY = mineGridY;
-                
-                this.cols = COLS;
-                this.rows = ROWS;
-                this.grid = [];
-                
-                this.initializeGrid();
-                this.placeBuildings();
-                this.placeMine();
-            }
-
-            initializeGrid() {
-                for (let y = 0; y < this.rows; y++) {
-                    this.grid[y] = [];
-                    for (let x = 0; x < this.cols; x++) {
-                        this.grid[y][x] = {
-                            walls: { top: false, right: false, bottom: false, left: false },
-                            wallTypes: { top: null, right: null, bottom: null, left: null },
-                            visited: false
-                        };
-                    }
-                }
-                
-                // Add border walls
-                for (let x = 0; x < this.cols; x++) {
-                    this.grid[0][x].walls.top = true;
-                    this.grid[0][x].wallTypes.top = 'border';
-                    this.grid[this.rows - 1][x].walls.bottom = true;
-                    this.grid[this.rows - 1][x].wallTypes.bottom = 'border';
-                }
-                for (let y = 0; y < this.rows; y++) {
-                    this.grid[y][0].walls.left = true;
-                    this.grid[y][0].wallTypes.left = 'border';
-                    this.grid[y][this.cols - 1].walls.right = true;
-                    this.grid[y][this.cols - 1].wallTypes.right = 'border';
-                }
-            }
-
-            placeBuildings() {
-                for (const building of this.buildings) {
-                    const startX = building.gridX;
-                    const startY = building.gridY;
-                    const endX = building.gridX + building.type.width;
-                    const endY = building.gridY + building.type.height;
-                    
-                    for (let y = startY; y < endY; y++) {
-                        for (let x = startX; x < endX; x++) {
-                            if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
-                                this.grid[y][x].walls.top = true;
-                                this.grid[y][x].walls.right = true;
-                                this.grid[y][x].walls.bottom = true;
-                                this.grid[y][x].walls.left = true;
-                                this.grid[y][x].wallTypes.top = 'structure';
-                                this.grid[y][x].wallTypes.right = 'structure';
-                                this.grid[y][x].wallTypes.bottom = 'structure';
-                                this.grid[y][x].wallTypes.left = 'structure';
-                            }
-                        }
-                    }
-                }
-            }
-
-            placeMine() {
-                const mineX = this.mineGridX;
-                const mineY = this.mineGridY;
-                
-                const radius = 1;
-                for (let dx = -radius; dx <= radius; dx++) {
-                    for (let dy = -radius; dy <= radius; dy++) {
-                        const x = mineX + dx;
-                        const y = mineY + dy;
-                        
-                        if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
-                            const dist = Math.abs(dx) + Math.abs(dy);
-                            if (dist <= radius) {
-                                this.grid[y][x].walls.top = true;
-                                this.grid[y][x].walls.right = true;
-                                this.grid[y][x].walls.bottom = true;
-                                this.grid[y][x].walls.left = true;
-                                this.grid[y][x].wallTypes.top = 'structure';
-                                this.grid[y][x].wallTypes.right = 'structure';
-                                this.grid[y][x].wallTypes.bottom = 'structure';
-                                this.grid[y][x].wallTypes.left = 'structure';
-                            }
-                        }
-                    }
-                }
-            }
-
-            getCell(x, y) {
-                const cellX = Math.floor(x / this.cellSize);
-                const cellY = Math.floor(y / this.cellSize);
-                if (cellX < 0 || cellX >= this.cols || cellY < 0 || cellY >= this.rows) {
-                    return null;
-                }
-                return this.grid[cellY][cellX];
-            }
-
-            drawMinimap(playerX, playerY) {
-                minimapCtx.fillStyle = '#000';
-                minimapCtx.fillRect(0, 0, 200, 200);
-
-                const cellSize = Math.min(200 / this.cols, 200 / this.rows);
-                minimapCtx.strokeStyle = '#4a90e2';
-                minimapCtx.lineWidth = 1;
-
-                for (let y = 0; y < this.rows; y++) {
-                    for (let x = 0; x < this.cols; x++) {
-                        const cell = this.grid[y][x];
-                        const screenX = x * cellSize;
-                        const screenY = y * cellSize;
-
-                        minimapCtx.beginPath();
-                        if (cell.walls.top) {
-                            minimapCtx.moveTo(screenX, screenY);
-                            minimapCtx.lineTo(screenX + cellSize, screenY);
-                        }
-                        if (cell.walls.right) {
-                            minimapCtx.moveTo(screenX + cellSize, screenY);
-                            minimapCtx.lineTo(screenX + cellSize, screenY + cellSize);
-                        }
-                        if (cell.walls.bottom) {
-                            minimapCtx.moveTo(screenX, screenY + cellSize);
-                            minimapCtx.lineTo(screenX + cellSize, screenY + cellSize);
-                        }
-                        if (cell.walls.left) {
-                            minimapCtx.moveTo(screenX, screenY);
-                            minimapCtx.lineTo(screenX, screenY + cellSize);
-                        }
-                        minimapCtx.stroke();
-                    }
-                }
-
-                const playerCellX = Math.floor(playerX / this.cellSize);
-                const playerCellY = Math.floor(playerY / this.cellSize);
-                minimapCtx.fillStyle = '#ff3366';
-                minimapCtx.beginPath();
-                minimapCtx.arc(playerCellX * cellSize + cellSize / 2, playerCellY * cellSize + cellSize / 2, cellSize / 3, 0, Math.PI * 2);
-                minimapCtx.fill();
-            }
-        }
-
-        class Player {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.angle = 0;
-                this.pitch = 0;
-                this.moveSpeed = 3;
-                this.fov = Math.PI / 3;
-                this.fovHalf = this.fov / 2;
-                this.rayCount = 240;
-                this.stripWidth = Math.ceil(nightCanvas.width / this.rayCount);
-                this.wallDistances = new Array(this.rayCount).fill(Infinity);
-                this.pitchOffset = 0;
-            }
-
-            move(dx, dy, maze) {
-                const newX = this.x + dx;
-                const newY = this.y + dy;
-                
-                if (!this.checkCollision(newX, this.y, maze)) {
-                    this.x = newX;
-                }
-                if (!this.checkCollision(this.x, newY, maze)) {
-                    this.y = newY;
-                }
-            }
-
-            checkCollision(x, y, maze) {
-                const cellX = Math.floor(x / maze.cellSize);
-                const cellY = Math.floor(y / maze.cellSize);
-                
-                if (cellX < 0 || cellX >= maze.cols || cellY < 0 || cellY >= maze.rows) {
-                    return true;
-                }
-                
-                const cell = maze.grid[cellY][cellX];
-                const localX = x % maze.cellSize;
-                const localY = y % maze.cellSize;
-                const margin = 8;
-                
-                if (localY < margin && cell.walls.top) return true;
-                if (localY > maze.cellSize - margin && cell.walls.bottom) return true;
-                if (localX < margin && cell.walls.left) return true;
-                if (localX > maze.cellSize - margin && cell.walls.right) return true;
-                
-                return false;
-            }
-
-            castRays(maze) {
-                const rays = [];
-                
-                for (let i = 0; i < this.rayCount; i++) {
-                    const rayAngle = this.angle - this.fov / 2 + (this.fov * i / this.rayCount);
-                    const ray = this.castRay(rayAngle, maze);
-                    rays.push(ray);
-                }
-                
-                return rays;
-            }
-
-            castRay(angle, maze) {
-                const dx = Math.cos(angle);
-                const dy = Math.sin(angle);
-                let dist = 0;
-                const step = 0.5;
-                const maxDist = 1000;
-                let hitWall = false;
-                let hitX = 0;
-                let hitY = 0;
-                let wallType = null;
-                let structureType = null;
-                
-                while (!hitWall && dist < maxDist) {
-                    dist += step;
-                    const testX = this.x + dx * dist;
-                    const testY = this.y + dy * dist;
-                    
-                    const cellX = Math.floor(testX / maze.cellSize);
-                    const cellY = Math.floor(testY / maze.cellSize);
-                    
-                    if (cellX < 0 || cellX >= maze.cols || cellY < 0 || cellY >= maze.rows) {
-                        hitWall = true;
-                        structureType = 'border';
-                        break;
-                    }
-                    
-                    const cell = maze.grid[cellY][cellX];
-                    const localX = testX % maze.cellSize;
-                    const localY = testY % maze.cellSize;
-                    
-                    if (localY < 1 && cell.walls.top) {
-                        hitWall = true;
-                        hitX = testX;
-                        hitY = testY;
-                        wallType = 'horizontal';
-                        structureType = cell.wallTypes.top;
-                    } else if (localY > maze.cellSize - 1 && cell.walls.bottom) {
-                        hitWall = true;
-                        hitX = testX;
-                        hitY = testY;
-                        wallType = 'horizontal';
-                        structureType = cell.wallTypes.bottom;
-                    } else if (localX < 1 && cell.walls.left) {
-                        hitWall = true;
-                        hitX = testX;
-                        hitY = testY;
-                        wallType = 'vertical';
-                        structureType = cell.wallTypes.left;
-                    } else if (localX > maze.cellSize - 1 && cell.walls.right) {
-                        hitWall = true;
-                        hitX = testX;
-                        hitY = testY;
-                        wallType = 'vertical';
-                        structureType = cell.wallTypes.right;
-                    }
-                }
-                
-                return { dist, angle, hitX, hitY, wallType, structureType };
-            }
-
-            render(maze) {
-                const rays = this.castRays(maze);
-                this.pitchOffset = this.pitch * 300;
-                
-                nightCtx.fillStyle = '#1a1a2e';
-                nightCtx.fillRect(0, 0, nightCanvas.width, nightCanvas.height);
-                
-                nightCtx.fillStyle = '#00ff88';
-                nightCtx.font = '12px Courier';
-                nightCtx.fillText(`Player: (${Math.floor(this.x)}, ${Math.floor(this.y)})`, 10, 20);
-                nightCtx.fillText(`Maze: ${maze.cols}x${maze.rows}`, 10, 35);
-                nightCtx.fillText(`Angle: ${(this.angle * 180 / Math.PI).toFixed(0)}°`, 10, 50);
-                
-                for (let i = 0; i < rays.length; i++) {
-                    const ray = rays[i];
-                    const correctedDist = ray.dist * Math.cos(ray.angle - this.angle);
-                    const wallHeight = (maze.cellSize * 600) / correctedDist;
-                    
-                    this.wallDistances[i] = correctedDist;
-                    
-                    const wallTop = (nightCanvas.height - wallHeight) / 2 + this.pitchOffset;
-                    const wallBottom = wallTop + wallHeight;
-                    
-                    const stripX = i * this.stripWidth;
-                    
-                    // Use appropriate coordinate based on wall orientation
-                    let texCoord = ray.wallType === 'vertical' ? ray.hitY : ray.hitX;
-                    let texX = Math.floor((Math.abs(texCoord) * 2)) % 32;
-                    texX = Math.max(0, Math.min(31, texX));
-                    
-                    let brightness = Math.max(0.2, 1 - correctedDist / 500);
-                    
-                    // Choose texture based on wall type
-                    const textureData = ray.structureType === 'border' ? grayBrickPixelData : brickPixelData;
-                    
-                    const clampedTop = Math.max(0, Math.floor(wallTop));
-                    const clampedBottom = Math.min(nightCanvas.height, Math.ceil(wallBottom));
-                    const sampleRate = Math.max(1, Math.floor((clampedBottom - clampedTop) / 32));
-                    
-                    for (let y = clampedTop; y < clampedBottom; y += sampleRate) {
-                        let wallProgress = (y - wallTop) / (wallBottom - wallTop);
-                        let texY = Math.floor(wallProgress * 32) % 32;
-                        texY = Math.max(0, Math.min(31, texY));
-                        
-                        const texIndex = (texY * 32 + texX) * 4;
-                        const r = textureData[texIndex] * brightness;
-                        const g = textureData[texIndex + 1] * brightness;
-                        const b = textureData[texIndex + 2] * brightness;
-                        
-                        nightCtx.fillStyle = `rgb(${r},${g},${b})`;
-                        nightCtx.fillRect(stripX, y, this.stripWidth, sampleRate);
-                    }
-                    
-                    // Add top stripe for border walls
-                    if (ray.structureType === 'border') {
-                        const stripeHeight = wallHeight;
-                        const stripeTop = wallTop - stripeHeight;
-                        const stripeBottom = wallTop;
-                        
-                        const clampedStripeTop = Math.max(0, Math.floor(stripeTop));
-                        const clampedStripeBottom = Math.min(nightCanvas.height, Math.ceil(stripeBottom));
-                        const stripeSampleRate = Math.max(1, Math.floor((clampedStripeBottom - clampedStripeTop) / 32));
-                        
-                        for (let y = clampedStripeTop; y < clampedStripeBottom; y += stripeSampleRate) {
-                            let stripeProgress = (y - stripeTop) / (stripeBottom - stripeTop);
-                            let stripeTexY = Math.floor(stripeProgress * 32) % 32;
-                            stripeTexY = Math.max(0, Math.min(31, stripeTexY));
-                            
-                            const stripeTexIndex = (stripeTexY * 32 + texX) * 4;
-                            const r = grayBrickPixelData[stripeTexIndex] * brightness;
-                            const g = grayBrickPixelData[stripeTexIndex + 1] * brightness;
-                            const b = grayBrickPixelData[stripeTexIndex + 2] * brightness;
-                            
-                            nightCtx.fillStyle = `rgb(${r},${g},${b})`;
-                            nightCtx.fillRect(stripX, y, this.stripWidth, stripeSampleRate);
-                        }
-                    }
-                }
-            }
-        }
-
-        const gameState = {
-            resources: 100,
-            workers: 0,
-            warriors: 0,
-            workerList: [],
-            warriorList: [],
-            buildings: [],
-            gamePhase: 'day',
-            dayStartTime: Date.now(),
-            selectedBuilding: null,
-            lastResourceGeneration: Date.now(),
-            mine: new Mine(
-                Math.floor(COLS * 0.5) + Math.floor(Math.random() * Math.floor(COLS * 0.4)),
-                Math.floor(ROWS * 0.4) + Math.floor(Math.random() * Math.floor(ROWS * 0.4))
-            ),
-            isNight: false,
-            nightSprites: []
-        };
-
-        let placingBuilding = null;
-        let previewPos = { x: 0, y: 0 };
-        let maze = null;
-        let player = null;
-        let pointerLocked = false;
+        // Input state
         const keys = {};
+        let pointerLocked = false;
 
-        function updateProductionUI() {
-            const prodSection = document.getElementById('productionSection');
-            
-            if (gameState.selectedBuilding) {
-                prodSection.style.display = 'block';
-                const building = gameState.selectedBuilding;
-                const unitName = building.type.productionType === 'worker' ? 'Worker' : 'Warrior';
-                
-                document.getElementById('selectedBuildingName').textContent = `${building.type.name} - Produce ${unitName}`;
-                
-                const produceBtn = document.getElementById('produceBtn');
-                produceBtn.textContent = `Produce ${unitName} (Cost: ${building.type.productionCost})`;
-                produceBtn.disabled = gameState.resources < building.type.productionCost;
+        // Textures
+        function createBrickTexture(baseColor) {
+            const texCanvas = document.createElement('canvas');
+            texCanvas.width = 32;
+            texCanvas.height = 32;
+            const texCtx = texCanvas.getContext('2d');
+
+            // Base color
+            texCtx.fillStyle = `rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b})`;
+            texCtx.fillRect(0, 0, 32, 32);
+
+            // Brick pattern
+            texCtx.strokeStyle = `rgb(${baseColor.r * 0.7}, ${baseColor.g * 0.7}, ${baseColor.b * 0.7})`;
+            texCtx.lineWidth = 1;
+
+            // Horizontal lines
+            for (let y = 0; y < 32; y += 8) {
+                texCtx.beginPath();
+                texCtx.moveTo(0, y);
+                texCtx.lineTo(32, y);
+                texCtx.stroke();
+            }
+
+            // Vertical lines (offset every other row)
+            for (let row = 0; row < 4; row++) {
+                const offset = row % 2 === 0 ? 0 : 8;
+                for (let x = offset; x < 32; x += 16) {
+                    texCtx.beginPath();
+                    texCtx.moveTo(x, row * 8);
+                    texCtx.lineTo(x, (row + 1) * 8);
+                    texCtx.stroke();
+                }
+            }
+
+            // Add some variation
+            for (let i = 0; i < 50; i++) {
+                const x = Math.random() * 32;
+                const y = Math.random() * 32;
+                const variation = (Math.random() - 0.5) * 30;
+                texCtx.fillStyle = `rgba(${baseColor.r + variation}, ${baseColor.g + variation}, ${baseColor.b + variation}, 0.3)`;
+                texCtx.fillRect(x, y, 2, 2);
+            }
+
+            return texCtx.getImageData(0, 0, 32, 32);
+        }
+
+        function createRoofTexture(baseColor) {
+            const texCanvas = document.createElement('canvas');
+            texCanvas.width = 32;
+            texCanvas.height = 32;
+            const texCtx = texCanvas.getContext('2d');
+
+            // Base color
+            texCtx.fillStyle = `rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b})`;
+            texCtx.fillRect(0, 0, 32, 32);
+
+            // Shingle pattern
+            for (let row = 0; row < 8; row++) {
+                const offset = row % 2 === 0 ? 0 : 4;
+                for (let x = offset; x < 32; x += 8) {
+                    const variation = (Math.random() - 0.5) * 20;
+                    texCtx.fillStyle = `rgb(${baseColor.r + variation}, ${baseColor.g + variation}, ${baseColor.b + variation})`;
+                    texCtx.fillRect(x, row * 4, 7, 3);
+
+                    // Shadow line
+                    texCtx.fillStyle = `rgba(0, 0, 0, 0.2)`;
+                    texCtx.fillRect(x, row * 4 + 3, 8, 1);
+                }
+            }
+
+            return texCtx.getImageData(0, 0, 32, 32);
+        }
+
+        // Pre-generate textures for each building type
+        const wallTextures = {};
+        const roofTextures = {};
+        for (const [key, type] of Object.entries(BUILDING_TYPES)) {
+            wallTextures[key] = createBrickTexture(type.wallColor);
+            roofTextures[key] = createRoofTexture(type.roofColor);
+        }
+
+        // Sky texture
+        let skyTexture = null;
+        const skyImg = new Image();
+        skyImg.onload = () => {
+            // Create a canvas with original + horizontally flipped version for seamless wrapping
+            const canvas = document.createElement('canvas');
+            canvas.width = skyImg.width * 2;
+            canvas.height = skyImg.height;
+            const ctx = canvas.getContext('2d');
+
+            // Draw original image on the left
+            ctx.drawImage(skyImg, 0, 0);
+
+            // Draw horizontally flipped image on the right
+            ctx.save();
+            ctx.translate(skyImg.width * 2, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(skyImg, 0, 0);
+            ctx.restore();
+
+            skyTexture = canvas;
+            console.log('Sky texture loaded:', skyTexture.width, 'x', skyTexture.height);
+        };
+        skyImg.src = 'assets/night_sky_2.png';
+
+        // Ground texture
+        const groundTexture = (() => {
+            const texCanvas = document.createElement('canvas');
+            texCanvas.width = 32;
+            texCanvas.height = 32;
+            const texCtx = texCanvas.getContext('2d');
+
+            // Grass base
+            texCtx.fillStyle = '#4a7c3f';
+            texCtx.fillRect(0, 0, 32, 32);
+
+            // Grass variation
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * 32;
+                const y = Math.random() * 32;
+                const green = 60 + Math.random() * 60;
+                texCtx.fillStyle = `rgb(${40 + Math.random() * 30}, ${green}, ${30 + Math.random() * 20})`;
+                texCtx.fillRect(x, y, 1, 2);
+            }
+
+            return texCtx.getImageData(0, 0, 32, 32);
+        })();
+
+        // Sky gradient colors (fallback for when texture not loaded)
+        const skyColors = {
+            top: { r: 10, g: 10, b: 30 },
+            bottom: { r: 30, g: 30, b: 60 }
+        };
+
+        // Off-screen canvas for compositing (reused each frame)
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = canvas.width;
+        offCanvas.height = canvas.height;
+        const offCtx = offCanvas.getContext('2d');
+
+        // Check if point is inside a building
+        function pointInBuilding(x, y) {
+            for (const building of buildings) {
+                if (x >= building.x && x < building.x + building.width &&
+                    y >= building.y && y < building.y + building.depth) {
+                    return building;
+                }
+            }
+            return null;
+        }
+
+        // Ray-building intersection
+        function rayBuildingIntersection(rayX, rayY, rayDirX, rayDirY, building) {
+            const hits = [];
+
+            // Check all 4 walls
+            const walls = [
+                { x1: building.x, y1: building.y, x2: building.x + building.width, y2: building.y, side: 'front' },
+                { x1: building.x + building.width, y1: building.y, x2: building.x + building.width, y2: building.y + building.depth, side: 'right' },
+                { x1: building.x, y1: building.y + building.depth, x2: building.x + building.width, y2: building.y + building.depth, side: 'back' },
+                { x1: building.x, y1: building.y, x2: building.x, y2: building.y + building.depth, side: 'left' }
+            ];
+
+            for (const wall of walls) {
+                const hit = rayLineIntersection(rayX, rayY, rayDirX, rayDirY, wall.x1, wall.y1, wall.x2, wall.y2);
+                if (hit) {
+                    hit.building = building;
+                    hit.side = wall.side;
+                    hit.wallLength = Math.sqrt((wall.x2 - wall.x1) ** 2 + (wall.y2 - wall.y1) ** 2);
+
+                    // Calculate texture coordinate along wall
+                    if (wall.x1 === wall.x2) {
+                        hit.texCoord = (hit.y - wall.y1) / (wall.y2 - wall.y1);
+                    } else {
+                        hit.texCoord = (hit.x - wall.x1) / (wall.x2 - wall.x1);
+                    }
+
+                    hits.push(hit);
+                }
+            }
+
+            return hits;
+        }
+
+        // Ray-line segment intersection
+        function rayLineIntersection(rayX, rayY, rayDirX, rayDirY, x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+
+            const denom = rayDirX * dy - rayDirY * dx;
+            if (Math.abs(denom) < 0.0001) return null;
+
+            const t = ((x1 - rayX) * dy - (y1 - rayY) * dx) / denom;
+            const u = ((x1 - rayX) * rayDirY - (y1 - rayY) * rayDirX) / denom;
+
+            if (t > 0.1 && u >= 0 && u <= 1) {
+                return {
+                    x: rayX + rayDirX * t,
+                    y: rayY + rayDirY * t,
+                    dist: t
+                };
+            }
+
+            return null;
+        }
+
+        // Cast a single ray and get all hits sorted by distance
+        function castRay(angle) {
+            const dirX = Math.cos(angle);
+            const dirY = Math.sin(angle);
+
+            const hits = [];
+
+            // Check intersections with all buildings
+            for (const building of buildings) {
+                const buildingHits = rayBuildingIntersection(player.x, player.y, dirX, dirY, building);
+                hits.push(...buildingHits);
+            }
+
+            // Check world boundaries
+            // North wall has an opening from x=900 to x=1100 to see the sky
+            const boundaries = [
+                { x1: 0, y1: 0, x2: 900, y2: 0, type: 'boundary' },      // North wall left segment
+                { x1: 1100, y1: 0, x2: WORLD_SIZE, y2: 0, type: 'boundary' }, // North wall right segment
+                { x1: WORLD_SIZE, y1: 0, x2: WORLD_SIZE, y2: WORLD_SIZE, type: 'boundary' },
+                { x1: 0, y1: WORLD_SIZE, x2: WORLD_SIZE, y2: WORLD_SIZE, type: 'boundary' },
+                { x1: 0, y1: 0, x2: 0, y2: WORLD_SIZE, type: 'boundary' }
+            ];
+
+            for (const bound of boundaries) {
+                const hit = rayLineIntersection(player.x, player.y, dirX, dirY, bound.x1, bound.y1, bound.x2, bound.y2);
+                if (hit) {
+                    hit.isBoundary = true;
+                    hit.building = {
+                        type: {
+                            wallHeight: 100,
+                            roofHeight: 0,
+                            roofType: 'none',
+                            wallColor: { r: 60, g: 60, b: 70 }
+                        }
+                    };
+                    hits.push(hit);
+                }
+            }
+
+            // Sort by distance
+            hits.sort((a, b) => a.dist - b.dist);
+
+            return hits;
+        }
+
+        // Draw sky with texture
+        function drawSky() {
+            const pitchOffset = player.pitch * 300;
+            const horizonY = canvas.height / 2 + pitchOffset;
+
+            if (skyTexture) {
+                const width = skyTexture.width;
+                const height = skyTexture.height;
+
+                let angleRatio = player.angle / (2 * Math.PI);
+                let xOffset = (angleRatio * width) % width;
+                if (xOffset < 0) xOffset += width;
+
+                // Fill entire sky area with dark color first
+                ctx.fillStyle = '#0a0a1a';
+                ctx.fillRect(0, 0, canvas.width, Math.max(0, horizonY));
+
+                // Use larger sky height to reduce empty space
+                const fixedSkyHeight = canvas.height * 0.95;
+                const skyHeight = Math.max(0, Math.min(fixedSkyHeight, horizonY));
+
+                if (skyHeight > 0) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(0, 0, canvas.width, skyHeight);
+                    ctx.clip();
+
+                    // Draw sky with seamless wrapping
+                    ctx.drawImage(skyTexture,
+                        xOffset, 0, width - xOffset, height,
+                        0, 0, canvas.width * (1 - xOffset/width), fixedSkyHeight
+                    );
+
+                    if (xOffset > 0) {
+                        ctx.drawImage(skyTexture,
+                            0, 0, xOffset, height,
+                            canvas.width * (1 - xOffset/width), 0, canvas.width * (xOffset/width), fixedSkyHeight
+                        );
+                    }
+
+                    ctx.restore();
+                }
             } else {
-                prodSection.style.display = 'none';
+                // Fallback gradient sky
+                const gradient = ctx.createLinearGradient(0, 0, 0, horizonY);
+                gradient.addColorStop(0, `rgb(${skyColors.top.r}, ${skyColors.top.g}, ${skyColors.top.b})`);
+                gradient.addColorStop(1, `rgb(${skyColors.bottom.r}, ${skyColors.bottom.g}, ${skyColors.bottom.b})`);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, Math.max(0, horizonY));
             }
         }
 
-        function updateUI() {
-            document.getElementById('workerCount').textContent = gameState.workers;
-            document.getElementById('warriorCount').textContent = gameState.warriors;
-            document.getElementById('resourceCount').textContent = Math.floor(gameState.resources);
-            document.getElementById('popCount').textContent = gameState.workers + gameState.warriors;
+        // Render the scene
+        function render() {
+            const pitchOffset = player.pitch * 300;
+            const horizon = canvas.height / 2 + pitchOffset;
 
-            const elapsed = (Date.now() - gameState.dayStartTime) / 1000;
-            document.getElementById('timeUntilNight').textContent = `Time: ${elapsed.toFixed(0)}s / 120s`;
+            // Draw sky first using canvas API (more efficient)
+            drawSky();
 
-            document.getElementById('townHallBtn').disabled = gameState.resources < 50;
-            document.getElementById('barracksBtn').disabled = gameState.resources < 80;
+            // Create image data for walls and ground
+            const imageData = ctx.createImageData(canvas.width, canvas.height);
+            const data = imageData.data;
 
-            updateProductionUI();
-        }
-
-        function generateResources() {
-            const now = Date.now();
-            const timeSinceLastGeneration = now - gameState.lastResourceGeneration;
-            
-            if (timeSinceLastGeneration >= 1000) {
-                gameState.resources += gameState.workers;
-                gameState.lastResourceGeneration = now;
+            // Make image data transparent initially so sky shows through
+            for (let i = 3; i < data.length; i += 4) {
+                data[i] = 0; // Alpha = 0 (transparent)
             }
+
+            // For each column (ray)
+            for (let col = 0; col < player.rayCount; col++) {
+                const rayAngle = player.angle - player.fov / 2 + (player.fov * col / player.rayCount);
+                const hits = castRay(rayAngle);
+
+                const stripWidth = Math.ceil(canvas.width / player.rayCount);
+                const screenX = col * stripWidth;
+
+                // Track which screen pixels are already filled (for proper occlusion)
+                const columnFilled = new Array(canvas.height).fill(false);
+
+                // Process hits from near to far - skip pixels already filled by closer objects
+                for (let hitIdx = 0; hitIdx < hits.length; hitIdx++) {
+                    const hit = hits[hitIdx];
+                    const correctedDist = hit.dist * Math.cos(rayAngle - player.angle);
+
+                    if (correctedDist <= 0) continue;
+
+                    const building = hit.building;
+                    const type = building.type;
+
+                    // Calculate wall projection
+                    const wallHeight = type.wallHeight;
+                    const roofHeight = type.roofHeight;
+                    const totalHeight = wallHeight + roofHeight;
+
+                    // Project heights to screen
+                    const projScale = 600 / correctedDist;
+
+                    // Wall bottom is at ground level (z=0)
+                    // Wall top is at wallHeight
+                    // Roof top is at wallHeight + roofHeight
+
+                    const wallBottomScreen = horizon + (player.z - 0) * projScale;
+                    const wallTopScreen = horizon + (player.z - wallHeight) * projScale;
+                    const roofTopScreen = horizon + (player.z - totalHeight) * projScale;
+
+                    // Calculate brightness based on distance and wall side
+                    let brightness = Math.max(0.25, 1 - correctedDist / 1200);
+                    if (hit.side === 'left' || hit.side === 'right') {
+                        brightness *= 0.8; // Side walls are darker
+                    }
+
+                    // Get texture key for this building type
+                    let textureKey = 'HOUSE';
+                    for (const [key, t] of Object.entries(BUILDING_TYPES)) {
+                        if (t === type) {
+                            textureKey = key;
+                            break;
+                        }
+                    }
+
+                    const wallTex = wallTextures[textureKey] || wallTextures['HOUSE'];
+                    const roofTex = roofTextures[textureKey] || roofTextures['HOUSE'];
+
+                    // Draw wall
+                    const wallStartY = Math.max(0, Math.floor(wallTopScreen));
+                    const wallEndY = Math.min(canvas.height, Math.ceil(wallBottomScreen));
+
+                    for (let y = wallStartY; y < wallEndY; y++) {
+                        if (columnFilled[y]) continue;
+
+                        const wallProgress = (y - wallTopScreen) / (wallBottomScreen - wallTopScreen);
+                        const texY = Math.floor(wallProgress * 32) % 32;
+                        const texX = Math.floor((hit.texCoord || 0) * 32 * 4) % 32;
+
+                        const texIdx = (texY * 32 + texX) * 4;
+                        const r = wallTex.data[texIdx] * brightness;
+                        const g = wallTex.data[texIdx + 1] * brightness;
+                        const b = wallTex.data[texIdx + 2] * brightness;
+
+                        for (let sx = 0; sx < stripWidth && screenX + sx < canvas.width; sx++) {
+                            const idx = ((y * canvas.width) + screenX + sx) * 4;
+                            data[idx] = r;
+                            data[idx + 1] = g;
+                            data[idx + 2] = b;
+                            data[idx + 3] = 255;
+                        }
+
+                        columnFilled[y] = true;
+                    }
+
+                    // Draw roof (if has roof)
+                    if (type.roofType !== 'none' && roofHeight > 0) {
+                        const roofStartY = Math.max(0, Math.floor(roofTopScreen));
+                        const roofEndY = Math.min(canvas.height, Math.ceil(wallTopScreen));
+
+                        for (let y = roofStartY; y < roofEndY; y++) {
+                            if (columnFilled[y]) continue;
+
+                            const roofProgress = (y - roofTopScreen) / (wallTopScreen - roofTopScreen);
+                            const texY = Math.floor(roofProgress * 32) % 32;
+                            const texX = Math.floor((hit.texCoord || 0) * 32 * 4) % 32;
+
+                            const texIdx = (texY * 32 + texX) * 4;
+
+                            // Peaked roof gets lighter at top
+                            let roofBrightness = brightness;
+                            if (type.roofType === 'peaked') {
+                                roofBrightness *= 0.8 + 0.4 * (1 - roofProgress);
+                            }
+
+                            const r = roofTex.data[texIdx] * roofBrightness;
+                            const g = roofTex.data[texIdx + 1] * roofBrightness;
+                            const b = roofTex.data[texIdx + 2] * roofBrightness;
+
+                            for (let sx = 0; sx < stripWidth && screenX + sx < canvas.width; sx++) {
+                                const idx = ((y * canvas.width) + screenX + sx) * 4;
+                                data[idx] = r;
+                                data[idx + 1] = g;
+                                data[idx + 2] = b;
+                                data[idx + 3] = 255;
+                            }
+
+                            columnFilled[y] = true;
+                        }
+                    }
+                }
+
+                // Draw ground for unfilled pixels below horizon
+                for (let y = Math.floor(horizon); y < canvas.height; y++) {
+                    if (columnFilled[y]) continue;
+
+                    // Calculate ground distance for this pixel
+                    const screenDist = y - horizon;
+                    if (screenDist <= 0) continue;
+
+                    const groundDist = (player.z * 600) / screenDist;
+                    const groundX = player.x + Math.cos(rayAngle) * groundDist;
+                    const groundY = player.y + Math.sin(rayAngle) * groundDist;
+
+                    // Sample ground texture
+                    const texX = Math.floor(Math.abs(groundX) / 4) % 32;
+                    const texY = Math.floor(Math.abs(groundY) / 4) % 32;
+                    const texIdx = (texY * 32 + texX) * 4;
+
+                    const brightness = Math.max(0.25, 1 - groundDist / 800);
+                    const r = groundTexture.data[texIdx] * brightness;
+                    const g = groundTexture.data[texIdx + 1] * brightness;
+                    const b = groundTexture.data[texIdx + 2] * brightness;
+
+                    for (let sx = 0; sx < stripWidth && screenX + sx < canvas.width; sx++) {
+                        const idx = ((y * canvas.width) + screenX + sx) * 4;
+                        data[idx] = r;
+                        data[idx + 1] = g;
+                        data[idx + 2] = b;
+                        data[idx + 3] = 255;
+                    }
+                }
+            }
+
+            // Put walls/ground on off-screen canvas and composite with sky
+            offCtx.putImageData(imageData, 0, 0);
+            ctx.drawImage(offCanvas, 0, 0);
         }
 
-        function startPlacing(buildingType) {
-            if (gameState.resources < buildingType.cost) {
-                alert('Not enough resources!');
+        // Draw minimap
+        function drawMinimap() {
+            const mapSize = minimapCanvas.width;
+
+            minimapCtx.fillStyle = '#1a1a2e';
+            minimapCtx.fillRect(0, 0, mapSize, mapSize);
+
+            const scale = mapSize / WORLD_SIZE;
+
+            // Draw ground
+            minimapCtx.fillStyle = '#4a7c3f';
+            minimapCtx.fillRect(0, 0, mapSize, mapSize);
+
+            // Draw buildings
+            for (const building of buildings) {
+                const type = building.type;
+                minimapCtx.fillStyle = `rgb(${type.wallColor.r}, ${type.wallColor.g}, ${type.wallColor.b})`;
+                minimapCtx.fillRect(
+                    building.x * scale,
+                    building.y * scale,
+                    building.width * scale,
+                    building.depth * scale
+                );
+
+                minimapCtx.strokeStyle = '#333';
+                minimapCtx.lineWidth = 1;
+                minimapCtx.strokeRect(
+                    building.x * scale,
+                    building.y * scale,
+                    building.width * scale,
+                    building.depth * scale
+                );
+            }
+
+            // Draw player
+            minimapCtx.fillStyle = '#ff3366';
+            minimapCtx.beginPath();
+            minimapCtx.arc(player.x * scale, player.y * scale, 4, 0, Math.PI * 2);
+            minimapCtx.fill();
+
+            // Draw view direction
+            minimapCtx.strokeStyle = '#ff3366';
+            minimapCtx.lineWidth = 2;
+            minimapCtx.beginPath();
+            minimapCtx.moveTo(player.x * scale, player.y * scale);
+            minimapCtx.lineTo(
+                (player.x + Math.cos(player.angle) * 80) * scale,
+                (player.y + Math.sin(player.angle) * 80) * scale
+            );
+            minimapCtx.stroke();
+
+            // Draw FOV cone
+            minimapCtx.strokeStyle = 'rgba(255, 51, 102, 0.3)';
+            minimapCtx.lineWidth = 1;
+            minimapCtx.beginPath();
+            minimapCtx.moveTo(player.x * scale, player.y * scale);
+            minimapCtx.lineTo(
+                (player.x + Math.cos(player.angle - player.fov / 2) * 150) * scale,
+                (player.y + Math.sin(player.angle - player.fov / 2) * 150) * scale
+            );
+            minimapCtx.stroke();
+            minimapCtx.beginPath();
+            minimapCtx.moveTo(player.x * scale, player.y * scale);
+            minimapCtx.lineTo(
+                (player.x + Math.cos(player.angle + player.fov / 2) * 150) * scale,
+                (player.y + Math.sin(player.angle + player.fov / 2) * 150) * scale
+            );
+            minimapCtx.stroke();
+        }
+
+        // Player movement with collision
+        function movePlayer(dx, dy) {
+            const newX = player.x + dx;
+            const newY = player.y + dy;
+
+            // Check world bounds
+            const margin = 10;
+            if (newX < margin || newX > WORLD_SIZE - margin || newY < margin || newY > WORLD_SIZE - margin) {
                 return;
             }
-            placingBuilding = buildingType;
+
+            // Check building collision
+            const playerRadius = 8;
+            for (const building of buildings) {
+                // Expanded bounds for collision
+                const left = building.x - playerRadius;
+                const right = building.x + building.width + playerRadius;
+                const top = building.y - playerRadius;
+                const bottom = building.y + building.depth + playerRadius;
+
+                if (newX > left && newX < right && newY > top && newY < bottom) {
+                    // Try sliding along walls
+                    const testX = player.x + dx;
+                    const testY = player.y + dy;
+
+                    // Check if only X movement collides
+                    if (!(testX > left && testX < right && player.y > top && player.y < bottom)) {
+                        player.x = testX;
+                    }
+                    // Check if only Y movement collides
+                    if (!(player.x > left && player.x < right && testY > top && testY < bottom)) {
+                        player.y = testY;
+                    }
+                    return;
+                }
+            }
+
+            player.x = newX;
+            player.y = newY;
         }
 
-        function drawDay() {
-            dayCtx.fillStyle = '#90ee90';
-            dayCtx.fillRect(0, 0, dayCanvas.width, dayCanvas.height);
-
-            for (const building of gameState.buildings) {
-                building.draw();
-            }
-
-            gameState.mine.draw();
-
-            for (const worker of gameState.workerList) {
-                worker.draw();
-            }
-
-            for (const warrior of gameState.warriorList) {
-                warrior.draw();
-            }
-
-            if (placingBuilding) {
-                const testBuilding = new Building(placingBuilding, previewPos.x, previewPos.y);
-                const canPlace = testBuilding.canPlace(previewPos.x, previewPos.y);
-
-                dayCtx.fillStyle = canPlace ? 'rgba(144, 238, 144, 0.5)' : 'rgba(255, 100, 100, 0.5)';
-                dayCtx.fillRect(previewPos.x * GRID_SIZE, previewPos.y * GRID_SIZE, placingBuilding.width * GRID_SIZE, placingBuilding.height * GRID_SIZE);
-
-                dayCtx.strokeStyle = canPlace ? '#228B22' : '#ff0000';
-                dayCtx.lineWidth = 2;
-                dayCtx.strokeRect(previewPos.x * GRID_SIZE, previewPos.y * GRID_SIZE, placingBuilding.width * GRID_SIZE, placingBuilding.height * GRID_SIZE);
-            }
-        }
-
-        function dayGameLoop() {
-            if (gameState.isNight) {
-                requestAnimationFrame(nightGameLoop);
-                return;
-            }
-
-            generateResources();
-            
-            for (const worker of gameState.workerList) {
-                worker.update();
-            }
-            
-            for (const warrior of gameState.warriorList) {
-                warrior.update();
-            }
-            
-            updateUI();
-            drawDay();
-            requestAnimationFrame(dayGameLoop);
-        }
-
+        // Game loop
         let lastTime = performance.now();
+        let frameCount = 0;
+        let fps = 0;
+        let lastFpsUpdate = performance.now();
 
-        function nightGameLoop() {
-            if (!gameState.isNight) {
-                requestAnimationFrame(dayGameLoop);
-                return;
-            }
-
-            if (!maze || !player) {
-                requestAnimationFrame(nightGameLoop);
-                return;
-            }
-
+        function gameLoop() {
             const currentTime = performance.now();
             const deltaTime = currentTime - lastTime;
             lastTime = currentTime;
             const deltaMultiplier = deltaTime / (1000 / 60);
 
+            // FPS counter
+            frameCount++;
+            if (currentTime - lastFpsUpdate >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastFpsUpdate = currentTime;
+            }
+
+            // Handle input - movement always works, mouse look requires pointer lock
             const moveX = Math.cos(player.angle) * player.moveSpeed * deltaMultiplier;
             const moveY = Math.sin(player.angle) * player.moveSpeed * deltaMultiplier;
             const strafeX = Math.cos(player.angle + Math.PI / 2) * player.moveSpeed * deltaMultiplier;
             const strafeY = Math.sin(player.angle + Math.PI / 2) * player.moveSpeed * deltaMultiplier;
 
-            if (keys['w']) player.move(moveX, moveY, maze);
-            if (keys['s']) player.move(-moveX, -moveY, maze);
-            if (keys['a']) player.move(-strafeX, -strafeY, maze);
-            if (keys['d']) player.move(strafeX, strafeY, maze);
+            if (keys['w'] || keys['arrowup']) movePlayer(moveX, moveY);
+            if (keys['s'] || keys['arrowdown']) movePlayer(-moveX, -moveY);
+            if (keys['a']) movePlayer(-strafeX, -strafeY);
+            if (keys['d']) movePlayer(strafeX, strafeY);
 
-            if (gameState.workerList.length > 0) {
-                for (const worker of gameState.workerList) {
-                    worker.update();
-                }
-            }
+            // Arrow keys for turning (when not using mouse)
+            if (keys['arrowleft']) player.angle -= 0.04 * deltaMultiplier;
+            if (keys['arrowright']) player.angle += 0.04 * deltaMultiplier;
 
-            if (gameState.warriorList.length > 0) {
-                for (const warrior of gameState.warriorList) {
-                    warrior.update();
-                }
-            }
+            // Q/E for looking up/down
+            if (keys['q']) player.pitch = Math.min(0.8, player.pitch + 0.02 * deltaMultiplier);
+            if (keys['e']) player.pitch = Math.max(-0.8, player.pitch - 0.02 * deltaMultiplier);
 
-            player.render(maze);
+            // Render
+            render();
+            drawMinimap();
 
-            for (let i = 0; i < gameState.nightSprites.length; i++) {
-                const sprite = gameState.nightSprites[i];
-                if (sprite.type === 'worker' && i < gameState.workerList.length) {
-                    const worker = gameState.workerList[i];
-                    sprite.x = worker.x;
-                    sprite.y = worker.y;
-                } else if (sprite.type === 'warrior') {
-                    const warriorIndex = i - gameState.workerList.length;
-                    if (warriorIndex >= 0 && warriorIndex < gameState.warriorList.length) {
-                        const warrior = gameState.warriorList[warriorIndex];
-                        sprite.x = warrior.x;
-                        sprite.y = warrior.y;
-                    }
-                }
-            }
+            // Update UI
+            document.getElementById('posInfo').textContent = `Position: (${Math.floor(player.x)}, ${Math.floor(player.y)})`;
+            document.getElementById('fpsInfo').textContent = `FPS: ${fps}`;
 
-            if (workerTexture || warriorTexture) {
-                for (const sprite of gameState.nightSprites) {
-                    sprite.render(player, maze, nightCtx, nightCanvas);
-                }
-            }
-
-            maze.drawMinimap(player.x, player.y);
-
-            requestAnimationFrame(nightGameLoop);
+            requestAnimationFrame(gameLoop);
         }
 
-        document.getElementById('phaseToggle').addEventListener('click', () => {
-            if (!gameState.isNight) {
-                gameState.isNight = true;
-                document.getElementById('phaseToggle').textContent = 'Return to Day';
-                document.getElementById('dayContainer').style.display = 'none';
-                document.getElementById('nightContainer').style.display = 'block';
-                document.getElementById('nightUI').style.display = 'block';
-                document.getElementById('crosshair').style.display = 'block';
-                
-                maze = new Maze(gameState.buildings, gameState.mine.gridX, gameState.mine.gridY);
-                player = new Player(2 * maze.cellSize + maze.cellSize / 2, 2 * maze.cellSize + maze.cellSize / 2);
-                
-                gameState.nightSprites = [];
-                
-                for (const worker of gameState.workerList) {
-                    const sprite = new Sprite(worker.x, worker.y, workerTexture, 30, 45);
-                    sprite.type = 'worker';
-                    gameState.nightSprites.push(sprite);
-                }
-                
-                for (const warrior of gameState.warriorList) {
-                    const sprite = new Sprite(warrior.x, warrior.y, warriorTexture, 35, 50);
-                    sprite.type = 'warrior';
-                    gameState.nightSprites.push(sprite);
-                }
-                
-                nightCanvas.requestPointerLock();
-                lastTime = performance.now();
-            } else {
-                gameState.isNight = false;
-                document.getElementById('phaseToggle').textContent = 'Start Night';
-                document.getElementById('dayContainer').style.display = 'flex';
-                document.getElementById('nightContainer').style.display = 'none';
-                document.getElementById('nightUI').style.display = 'none';
-                document.getElementById('crosshair').style.display = 'none';
-                
-                document.exitPointerLock();
-            }
-        });
-
-        dayCanvas.addEventListener('mousemove', (e) => {
-            const rect = dayCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            previewPos = {
-                x: Math.floor(x / GRID_SIZE),
-                y: Math.floor(y / GRID_SIZE)
-            };
-        });
-
-        dayCanvas.addEventListener('click', (e) => {
-            if (!placingBuilding) {
-                const rect = dayCanvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const gridX = Math.floor(x / GRID_SIZE);
-                const gridY = Math.floor(y / GRID_SIZE);
-
-                for (const building of gameState.buildings) {
-                    if (building.isPointInside(gridX, gridY)) {
-                        gameState.selectedBuilding = building;
-                        updateProductionUI();
-                        return;
-                    }
-                }
-                gameState.selectedBuilding = null;
-                updateProductionUI();
-                return;
-            }
-
-            const testBuilding = new Building(placingBuilding, previewPos.x, previewPos.y);
-            
-            if (testBuilding.canPlace(previewPos.x, previewPos.y)) {
-                gameState.resources -= placingBuilding.cost;
-                gameState.buildings.push(testBuilding);
-                placingBuilding = null;
-            } else {
-                alert('Cannot place building there!');
-            }
-        });
-
-        document.getElementById('townHallBtn').addEventListener('click', () => {
-            startPlacing(BUILDING_TYPES.TOWN_HALL);
-        });
-
-        document.getElementById('barracksBtn').addEventListener('click', () => {
-            startPlacing(BUILDING_TYPES.BARRACKS);
-        });
-
-        document.getElementById('produceBtn').addEventListener('click', () => {
-            if (gameState.selectedBuilding) {
-                gameState.selectedBuilding.produce();
-                updateUI();
-            }
-        });
-
-        document.getElementById('cancelSelectionBtn').addEventListener('click', () => {
-            gameState.selectedBuilding = null;
-            updateProductionUI();
-        });
-
+        // Event listeners
         window.addEventListener('keydown', e => {
             keys[e.key.toLowerCase()] = true;
         });
@@ -1574,26 +920,26 @@
             keys[e.key.toLowerCase()] = false;
         });
 
-        nightCanvas.addEventListener('click', () => {
-            nightCanvas.requestPointerLock();
+        canvas.addEventListener('click', () => {
+            canvas.requestPointerLock();
         });
 
         document.addEventListener('pointerlockchange', () => {
-            pointerLocked = document.pointerLockElement === nightCanvas;
+            pointerLocked = document.pointerLockElement === canvas;
         });
 
-        document.addEventListener('mousemove', (e) => {
-            if (pointerLocked && player && gameState.isNight) {
-                player.angle += e.movementX * 0.0014;
-                player.pitch -= e.movementY * 0.0014;
-                
-                const maxPitch = 1.4;
+        document.addEventListener('mousemove', e => {
+            if (pointerLocked) {
+                player.angle += e.movementX * 0.002;
+                player.pitch -= e.movementY * 0.002;
+
+                const maxPitch = 0.8;
                 player.pitch = Math.max(-maxPitch, Math.min(maxPitch, player.pitch));
             }
         });
 
-        updateUI();
-        dayGameLoop();
+        // Start game
+        gameLoop();
     </script>
 </body>
 </html>
