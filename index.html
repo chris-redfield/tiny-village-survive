@@ -102,6 +102,10 @@
         minimapCanvas.width = 250;
         minimapCanvas.height = 250;
 
+        // Cache DOM elements to avoid lookups every frame
+        const posInfoEl = document.getElementById('posInfo');
+        const fpsInfoEl = document.getElementById('fpsInfo');
+
         // World settings
         const WORLD_SIZE = 2000;
         const CELL_SIZE = 40;
@@ -256,6 +260,45 @@
             { type: BUILDING_TYPES.BARN, x: 580, y: 700, width: 60, depth: 50 },
             { type: BUILDING_TYPES.BARN, x: 1350, y: 1100, width: 70, depth: 55 },
         ];
+
+        // Pre-compute building data for performance
+        // Create texture key lookup map
+        const typeToTextureKey = new Map();
+        for (const [key, type] of Object.entries(BUILDING_TYPES)) {
+            typeToTextureKey.set(type, key);
+        }
+
+        // Pre-compute walls and texture keys for each building
+        for (const building of buildings) {
+            building.textureKey = typeToTextureKey.get(building.type) || 'HOUSE';
+            building.walls = [
+                { x1: building.x, y1: building.y, x2: building.x + building.width, y2: building.y, side: 'front' },
+                { x1: building.x + building.width, y1: building.y, x2: building.x + building.width, y2: building.y + building.depth, side: 'right' },
+                { x1: building.x, y1: building.y + building.depth, x2: building.x + building.width, y2: building.y + building.depth, side: 'back' },
+                { x1: building.x, y1: building.y, x2: building.x, y2: building.y + building.depth, side: 'left' }
+            ];
+            // Pre-compute bounding box for quick rejection
+            building.minX = building.x;
+            building.maxX = building.x + building.width;
+            building.minY = building.y;
+            building.maxY = building.y + building.depth;
+        }
+
+        // Pre-compute world boundaries (created once, not per ray)
+        const worldBoundaries = [
+            { x1: 0, y1: 0, x2: 900, y2: 0, type: 'boundary' },
+            { x1: 1100, y1: 0, x2: WORLD_SIZE, y2: 0, type: 'boundary' },
+            { x1: WORLD_SIZE, y1: 0, x2: WORLD_SIZE, y2: WORLD_SIZE, type: 'boundary' },
+            { x1: 0, y1: WORLD_SIZE, x2: WORLD_SIZE, y2: WORLD_SIZE, type: 'boundary' },
+            { x1: 0, y1: 0, x2: 0, y2: WORLD_SIZE, type: 'boundary' }
+        ];
+
+        const boundaryType = {
+            wallHeight: 100,
+            roofHeight: 0,
+            roofType: 'none',
+            wallColor: { r: 60, g: 60, b: 70 }
+        };
 
         // Player
         const player = {
@@ -691,24 +734,16 @@
             return null;
         }
 
-        // Ray-building intersection
+        // Ray-building intersection (uses pre-computed walls)
         function rayBuildingIntersection(rayX, rayY, rayDirX, rayDirY, building) {
             const hits = [];
 
-            // Check all 4 walls
-            const walls = [
-                { x1: building.x, y1: building.y, x2: building.x + building.width, y2: building.y, side: 'front' },
-                { x1: building.x + building.width, y1: building.y, x2: building.x + building.width, y2: building.y + building.depth, side: 'right' },
-                { x1: building.x, y1: building.y + building.depth, x2: building.x + building.width, y2: building.y + building.depth, side: 'back' },
-                { x1: building.x, y1: building.y, x2: building.x, y2: building.y + building.depth, side: 'left' }
-            ];
-
-            for (const wall of walls) {
+            // Use pre-computed walls
+            for (const wall of building.walls) {
                 const hit = rayLineIntersection(rayX, rayY, rayDirX, rayDirY, wall.x1, wall.y1, wall.x2, wall.y2);
                 if (hit) {
                     hit.building = building;
                     hit.side = wall.side;
-                    hit.wallLength = Math.sqrt((wall.x2 - wall.x1) ** 2 + (wall.y2 - wall.y1) ** 2);
 
                     // Calculate texture coordinate along wall
                     if (wall.x1 === wall.x2) {
@@ -759,28 +794,12 @@
                 hits.push(...buildingHits);
             }
 
-            // Check world boundaries
-            // North wall has an opening from x=900 to x=1100 to see the sky
-            const boundaries = [
-                { x1: 0, y1: 0, x2: 900, y2: 0, type: 'boundary' },      // North wall left segment
-                { x1: 1100, y1: 0, x2: WORLD_SIZE, y2: 0, type: 'boundary' }, // North wall right segment
-                { x1: WORLD_SIZE, y1: 0, x2: WORLD_SIZE, y2: WORLD_SIZE, type: 'boundary' },
-                { x1: 0, y1: WORLD_SIZE, x2: WORLD_SIZE, y2: WORLD_SIZE, type: 'boundary' },
-                { x1: 0, y1: 0, x2: 0, y2: WORLD_SIZE, type: 'boundary' }
-            ];
-
-            for (const bound of boundaries) {
+            // Check world boundaries (use pre-computed array)
+            for (const bound of worldBoundaries) {
                 const hit = rayLineIntersection(player.x, player.y, dirX, dirY, bound.x1, bound.y1, bound.x2, bound.y2);
                 if (hit) {
                     hit.isBoundary = true;
-                    hit.building = {
-                        type: {
-                            wallHeight: 100,
-                            roofHeight: 0,
-                            roofType: 'none',
-                            wallColor: { r: 60, g: 60, b: 70 }
-                        }
-                    };
+                    hit.building = { type: boundaryType, textureKey: 'FENCE' };
                     hits.push(hit);
                 }
             }
@@ -845,6 +864,11 @@
 
         // Wall distances array for sprite occlusion
         const wallDistances = new Array(player.rayCount).fill(Infinity);
+
+        // Pre-allocated arrays for render loop (avoid per-frame allocation)
+        const renderImageData = ctx.createImageData(canvas.width, canvas.height);
+        const renderData = renderImageData.data;
+        const columnFilled = new Uint8Array(canvas.height); // Reusable per-column array
 
         // Crowbar state
         const crowbar = {
@@ -1126,25 +1150,25 @@
             // Draw sky first using canvas API (more efficient)
             drawSky();
 
-            // Create image data for walls and ground
-            const imageData = ctx.createImageData(canvas.width, canvas.height);
-            const data = imageData.data;
-
-            // Make image data transparent initially so sky shows through
-            for (let i = 3; i < data.length; i += 4) {
-                data[i] = 0; // Alpha = 0 (transparent)
+            // Clear image data (set all alpha to 0) - use pre-allocated array
+            // Use typed array set for faster clearing
+            const dataLen = renderData.length;
+            for (let i = 0; i < dataLen; i += 4) {
+                renderData[i + 3] = 0; // Only clear alpha
             }
+
+            // Pre-calculate strip width (constant)
+            const stripWidth = Math.ceil(canvas.width / player.rayCount);
 
             // For each column (ray)
             for (let col = 0; col < player.rayCount; col++) {
                 const rayAngle = player.angle - player.fov / 2 + (player.fov * col / player.rayCount);
                 const hits = castRay(rayAngle);
 
-                const stripWidth = Math.ceil(canvas.width / player.rayCount);
                 const screenX = col * stripWidth;
 
-                // Track which screen pixels are already filled (for proper occlusion)
-                const columnFilled = new Array(canvas.height).fill(false);
+                // Reset column filled array (faster than creating new array)
+                columnFilled.fill(0);
 
                 // Process hits from near to far - skip pixels already filled by closer objects
                 for (let hitIdx = 0; hitIdx < hits.length; hitIdx++) {
@@ -1183,15 +1207,8 @@
                         brightness *= 0.8; // Side walls are darker
                     }
 
-                    // Get texture key for this building type
-                    let textureKey = 'HOUSE';
-                    for (const [key, t] of Object.entries(BUILDING_TYPES)) {
-                        if (t === type) {
-                            textureKey = key;
-                            break;
-                        }
-                    }
-
+                    // Use pre-computed texture key
+                    const textureKey = building.textureKey || 'HOUSE';
                     const wallTex = wallTextures[textureKey] || wallTextures['HOUSE'];
                     const roofTex = roofTextures[textureKey] || roofTextures['HOUSE'];
 
@@ -1213,13 +1230,13 @@
 
                         for (let sx = 0; sx < stripWidth && screenX + sx < canvas.width; sx++) {
                             const idx = ((y * canvas.width) + screenX + sx) * 4;
-                            data[idx] = r;
-                            data[idx + 1] = g;
-                            data[idx + 2] = b;
-                            data[idx + 3] = 255;
+                            renderData[idx] = r;
+                            renderData[idx + 1] = g;
+                            renderData[idx + 2] = b;
+                            renderData[idx + 3] = 255;
                         }
 
-                        columnFilled[y] = true;
+                        columnFilled[y] = 1;
                     }
 
                     // Draw roof (if has roof)
@@ -1248,18 +1265,22 @@
 
                             for (let sx = 0; sx < stripWidth && screenX + sx < canvas.width; sx++) {
                                 const idx = ((y * canvas.width) + screenX + sx) * 4;
-                                data[idx] = r;
-                                data[idx + 1] = g;
-                                data[idx + 2] = b;
-                                data[idx + 3] = 255;
+                                renderData[idx] = r;
+                                renderData[idx + 1] = g;
+                                renderData[idx + 2] = b;
+                                renderData[idx + 3] = 255;
                             }
 
-                            columnFilled[y] = true;
+                            columnFilled[y] = 1;
                         }
                     }
                 }
 
                 // Draw ground for unfilled pixels below horizon
+                // Pre-compute cos/sin for this ray (avoid recalculating)
+                const cosAngle = Math.cos(rayAngle);
+                const sinAngle = Math.sin(rayAngle);
+
                 for (let y = Math.floor(horizon); y < canvas.height; y++) {
                     if (columnFilled[y]) continue;
 
@@ -1268,8 +1289,8 @@
                     if (screenDist <= 0) continue;
 
                     const groundDist = (player.z * 600) / screenDist;
-                    const groundX = player.x + Math.cos(rayAngle) * groundDist;
-                    const groundY = player.y + Math.sin(rayAngle) * groundDist;
+                    const groundX = player.x + cosAngle * groundDist;
+                    const groundY = player.y + sinAngle * groundDist;
 
                     // Sample ground texture
                     const texX = Math.floor(Math.abs(groundX) / 4) % 32;
@@ -1283,28 +1304,49 @@
 
                     for (let sx = 0; sx < stripWidth && screenX + sx < canvas.width; sx++) {
                         const idx = ((y * canvas.width) + screenX + sx) * 4;
-                        data[idx] = r;
-                        data[idx + 1] = g;
-                        data[idx + 2] = b;
-                        data[idx + 3] = 255;
+                        renderData[idx] = r;
+                        renderData[idx + 1] = g;
+                        renderData[idx + 2] = b;
+                        renderData[idx + 3] = 255;
                     }
                 }
             }
 
             // Put walls/ground on off-screen canvas and composite with sky
-            offCtx.putImageData(imageData, 0, 0);
+            offCtx.putImageData(renderImageData, 0, 0);
             ctx.drawImage(offCanvas, 0, 0);
 
             // Render villager sprites (sorted by distance, far to near)
             if (villagerTexture && sprites.length > 0) {
-                // Sort sprites by distance (far to near) for proper rendering order
-                sprites.sort((a, b) => {
-                    const distA = (a.x - player.x) ** 2 + (a.y - player.y) ** 2;
-                    const distB = (b.x - player.x) ** 2 + (b.y - player.y) ** 2;
-                    return distB - distA;
-                });
+                // Filter to only potentially visible sprites and sort them
+                const visibleSprites = [];
+                const maxRenderDist = 1500;
+                const fovHalf = player.fov / 2 + 0.3; // Slightly larger for margin
 
                 for (const sprite of sprites) {
+                    const dx = sprite.x - player.x;
+                    const dy = sprite.y - player.y;
+                    const distSq = dx * dx + dy * dy;
+
+                    // Quick distance check
+                    if (distSq > maxRenderDist * maxRenderDist) continue;
+
+                    // Quick angle check
+                    const angle = Math.atan2(dy, dx);
+                    let relAngle = angle - player.angle;
+                    while (relAngle > Math.PI) relAngle -= Math.PI * 2;
+                    while (relAngle < -Math.PI) relAngle += Math.PI * 2;
+
+                    if (Math.abs(relAngle) <= fovHalf) {
+                        sprite._distSq = distSq; // Cache for sorting
+                        visibleSprites.push(sprite);
+                    }
+                }
+
+                // Sort only visible sprites (far to near)
+                visibleSprites.sort((a, b) => b._distSq - a._distSq);
+
+                for (const sprite of visibleSprites) {
                     sprite.render(ctx, canvas, wallDistances);
                 }
             }
@@ -1480,9 +1522,9 @@
             render();
             drawMinimap();
 
-            // Update UI
-            document.getElementById('posInfo').textContent = `Position: (${Math.floor(player.x)}, ${Math.floor(player.y)})`;
-            document.getElementById('fpsInfo').textContent = `FPS: ${fps}`;
+            // Update UI (use cached elements)
+            posInfoEl.textContent = `Position: (${Math.floor(player.x)}, ${Math.floor(player.y)})`;
+            fpsInfoEl.textContent = `FPS: ${fps}`;
 
             requestAnimationFrame(gameLoop);
         }
