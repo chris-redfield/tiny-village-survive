@@ -451,6 +451,259 @@
             bottom: { r: 30, g: 30, b: 60 }
         };
 
+        // Tree textures (procedurally generated)
+        const treeTextures = [];
+        const TREE_VARIATIONS = 4;
+
+        function generateTreeTexture(variation) {
+            const width = 64;
+            const height = 96;
+            const texCanvas = document.createElement('canvas');
+            texCanvas.width = width;
+            texCanvas.height = height;
+            const texCtx = texCanvas.getContext('2d');
+
+            // Clear with transparency
+            texCtx.clearRect(0, 0, width, height);
+
+            // Variation parameters
+            const trunkWidth = 8 + (variation % 2) * 4;
+            const trunkHeight = 25 + (variation % 3) * 5;
+            const foliageStyle = variation % 2; // 0 = pine, 1 = round
+
+            // Draw trunk
+            const trunkX = width / 2 - trunkWidth / 2;
+            const trunkY = height - trunkHeight;
+
+            // Trunk gradient
+            const trunkGrad = texCtx.createLinearGradient(trunkX, 0, trunkX + trunkWidth, 0);
+            trunkGrad.addColorStop(0, '#3d2817');
+            trunkGrad.addColorStop(0.3, '#5c4033');
+            trunkGrad.addColorStop(0.7, '#4a3525');
+            trunkGrad.addColorStop(1, '#2d1810');
+            texCtx.fillStyle = trunkGrad;
+            texCtx.fillRect(trunkX, trunkY, trunkWidth, trunkHeight);
+
+            // Trunk texture lines
+            texCtx.strokeStyle = 'rgba(0,0,0,0.2)';
+            texCtx.lineWidth = 1;
+            for (let i = 0; i < trunkHeight; i += 6) {
+                texCtx.beginPath();
+                texCtx.moveTo(trunkX + 2, trunkY + i);
+                texCtx.lineTo(trunkX + trunkWidth - 2, trunkY + i + 3);
+                texCtx.stroke();
+            }
+
+            // Draw foliage
+            const foliageBottom = trunkY + 5;
+            const foliageTop = 5;
+
+            if (foliageStyle === 0) {
+                // Pine tree - triangular layers
+                const layers = 3 + (variation % 2);
+                const layerHeight = (foliageBottom - foliageTop) / layers;
+
+                for (let i = 0; i < layers; i++) {
+                    const layerY = foliageTop + i * layerHeight * 0.7;
+                    const layerWidth = 15 + i * 12 + (variation * 3);
+                    const baseGreen = 30 + (variation * 10);
+
+                    // Layer shadow
+                    texCtx.fillStyle = `rgb(${baseGreen - 15}, ${60 + variation * 5}, ${baseGreen - 10})`;
+                    texCtx.beginPath();
+                    texCtx.moveTo(width / 2, layerY);
+                    texCtx.lineTo(width / 2 - layerWidth / 2, layerY + layerHeight + 10);
+                    texCtx.lineTo(width / 2 + layerWidth / 2, layerY + layerHeight + 10);
+                    texCtx.closePath();
+                    texCtx.fill();
+
+                    // Layer main
+                    const foliageGrad = texCtx.createLinearGradient(0, layerY, 0, layerY + layerHeight);
+                    foliageGrad.addColorStop(0, `rgb(${baseGreen + 20}, ${90 + variation * 8}, ${baseGreen})`);
+                    foliageGrad.addColorStop(1, `rgb(${baseGreen}, ${65 + variation * 5}, ${baseGreen - 10})`);
+                    texCtx.fillStyle = foliageGrad;
+                    texCtx.beginPath();
+                    texCtx.moveTo(width / 2, layerY - 5);
+                    texCtx.lineTo(width / 2 - layerWidth / 2 + 3, layerY + layerHeight + 5);
+                    texCtx.lineTo(width / 2 + layerWidth / 2 - 3, layerY + layerHeight + 5);
+                    texCtx.closePath();
+                    texCtx.fill();
+                }
+            } else {
+                // Round/deciduous tree - circular foliage
+                const centerX = width / 2;
+                const radius = 22 + variation * 4;
+                const centerY = foliageTop + radius;
+                const baseGreen = 40 + variation * 8;
+
+                // Multiple overlapping circles for organic look
+                const circles = [
+                    { x: 0, y: 0, r: radius, dark: false },
+                    { x: -10, y: 5, r: radius * 0.7, dark: true },
+                    { x: 10, y: 5, r: radius * 0.7, dark: true },
+                    { x: 0, y: -8, r: radius * 0.6, dark: false },
+                    { x: -6, y: 10, r: radius * 0.5, dark: true },
+                    { x: 8, y: 8, r: radius * 0.5, dark: true },
+                ];
+
+                for (const circle of circles) {
+                    const grad = texCtx.createRadialGradient(
+                        centerX + circle.x, centerY + circle.y, 0,
+                        centerX + circle.x, centerY + circle.y, circle.r
+                    );
+                    if (circle.dark) {
+                        grad.addColorStop(0, `rgb(${baseGreen + 10}, ${75 + variation * 6}, ${baseGreen - 5})`);
+                        grad.addColorStop(1, `rgba(${baseGreen - 10}, ${55 + variation * 4}, ${baseGreen - 15}, 0.8)`);
+                    } else {
+                        grad.addColorStop(0, `rgb(${baseGreen + 25}, ${95 + variation * 6}, ${baseGreen + 5})`);
+                        grad.addColorStop(0.7, `rgb(${baseGreen + 5}, ${70 + variation * 5}, ${baseGreen - 5})`);
+                        grad.addColorStop(1, `rgba(${baseGreen - 5}, ${60 + variation * 4}, ${baseGreen - 10}, 0.9)`);
+                    }
+                    texCtx.fillStyle = grad;
+                    texCtx.beginPath();
+                    texCtx.arc(centerX + circle.x, centerY + circle.y, circle.r, 0, Math.PI * 2);
+                    texCtx.fill();
+                }
+            }
+
+            // Get image data
+            return {
+                width: width,
+                height: height,
+                imageData: texCtx.getImageData(0, 0, width, height),
+                canvas: texCanvas
+            };
+        }
+
+        // Generate tree textures at startup
+        for (let i = 0; i < TREE_VARIATIONS; i++) {
+            treeTextures.push(generateTreeTexture(i));
+        }
+
+        // Tree class (static billboard sprite) - uses fast drawImage rendering
+        class Tree {
+            constructor(x, y, variation, scale = 1) {
+                this.x = x;
+                this.y = y;
+                this.texture = treeTextures[variation % TREE_VARIATIONS];
+                this.scale = scale;
+                this.width = 40 * scale;
+                this.height = 60 * scale;
+            }
+
+            // Fast check if tree is potentially visible (used for culling)
+            isVisible(fovHalf) {
+                const dx = this.x - player.x;
+                const dy = this.y - player.y;
+                const distSq = dx * dx + dy * dy;
+
+                if (distSq > 1500 * 1500) return false;
+
+                const angle = Math.atan2(dy, dx);
+                let relAngle = angle - player.angle;
+                while (relAngle > Math.PI) relAngle -= Math.PI * 2;
+                while (relAngle < -Math.PI) relAngle += Math.PI * 2;
+
+                return Math.abs(relAngle) <= fovHalf + 0.3;
+            }
+
+            render(ctx, canvas, wallDistances) {
+                if (!this.texture || !this.texture.canvas) return;
+
+                const dx = this.x - player.x;
+                const dy = this.y - player.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx);
+
+                let relativeAngle = angle - player.angle;
+                while (relativeAngle > Math.PI) relativeAngle -= Math.PI * 2;
+                while (relativeAngle < -Math.PI) relativeAngle += Math.PI * 2;
+
+                const fovHalf = player.fov / 2;
+                const correctedDist = dist * Math.cos(relativeAngle);
+                if (correctedDist <= 0) return;
+
+                // Check center column for wall occlusion
+                const screenCenterX = (canvas.width / 2) + (relativeAngle / fovHalf) * (canvas.width / 2);
+                const rayIndex = Math.floor((screenCenterX / canvas.width) * player.rayCount);
+                const wallDist = wallDistances[rayIndex] || Infinity;
+
+                if (wallDist < correctedDist) return; // Behind a wall
+
+                const pitchOffset = player.pitch * 300;
+
+                // Calculate sprite size based on distance
+                const spriteScale = 600 / correctedDist;
+                const spriteHeight = this.height * spriteScale;
+                const spriteWidth = this.width * spriteScale;
+
+                // Tree bottom at ground level
+                const horizon = canvas.height / 2 + pitchOffset;
+                const groundY = horizon + (player.z - 0) * spriteScale;
+                const spriteTop = groundY - spriteHeight;
+
+                const spriteLeft = screenCenterX - spriteWidth / 2;
+
+                // Skip if off screen
+                if (spriteLeft + spriteWidth < 0 || spriteLeft > canvas.width) return;
+
+                // Use hardware-accelerated drawImage (MUCH faster than fillRect per pixel)
+                // Draw at full opacity - no transparency
+                ctx.drawImage(
+                    this.texture.canvas,
+                    spriteLeft,
+                    spriteTop,
+                    spriteWidth,
+                    spriteHeight
+                );
+            }
+        }
+
+        // Create forest trees around the northern entrance
+        const trees = [];
+
+        function createForestTrees() {
+            // Forest OUTSIDE the city walls (negative y values)
+            // The northern entrance gap is at x=900 to x=1100, y=0
+            // Trees start at y=-280 to avoid "leaking" over the tall wall
+
+            // Dense forest outside - spans the full width, multiple rows deep
+            // DOUBLED density: reduced spacing from 50 to 30, and 45 to 25
+            for (let x = 100; x < WORLD_SIZE - 100; x += 30 + Math.random() * 25) {
+                for (let y = -800; y < -280; y += 25 + Math.random() * 20) {
+                    const tx = x + (Math.random() - 0.5) * 20;
+                    const ty = y + (Math.random() - 0.5) * 15;
+                    const variation = Math.floor(Math.random() * TREE_VARIATIONS);
+                    const scale = 0.9 + Math.random() * 0.4;
+                    trees.push(new Tree(tx, ty, variation, scale));
+                }
+            }
+
+            // Extra dense trees framing the entrance from outside (pushed back)
+            // Left side of entrance
+            for (let i = 0; i < 10; i++) {
+                trees.push(new Tree(
+                    820 + Math.random() * 60,
+                    -300 - i * 40 + Math.random() * 20,
+                    Math.floor(Math.random() * TREE_VARIATIONS),
+                    1.0 + Math.random() * 0.3
+                ));
+            }
+            // Right side of entrance
+            for (let i = 0; i < 10; i++) {
+                trees.push(new Tree(
+                    1120 + Math.random() * 60,
+                    -300 - i * 40 + Math.random() * 20,
+                    Math.floor(Math.random() * TREE_VARIATIONS),
+                    1.0 + Math.random() * 0.3
+                ));
+            }
+
+            console.log(`Created ${trees.length} trees outside the walls`);
+        }
+
+        createForestTrees();
+
         // Villager texture
         let villagerTexture = null;
         const villagerImg = new Image();
@@ -1316,39 +1569,60 @@
             offCtx.putImageData(renderImageData, 0, 0);
             ctx.drawImage(offCanvas, 0, 0);
 
-            // Render villager sprites (sorted by distance, far to near)
-            if (villagerTexture && sprites.length > 0) {
-                // Filter to only potentially visible sprites and sort them
-                const visibleSprites = [];
-                const maxRenderDist = 1500;
-                const fovHalf = player.fov / 2 + 0.3; // Slightly larger for margin
+            // Render all sprites (trees + villagers) combined and sorted by distance
+            // This ensures proper occlusion between trees and villagers
+            const allVisibleSprites = [];
+            const maxRenderDist = 1500;
+            const fovHalf = player.fov / 2 + 0.3;
 
+            // Add visible trees
+            for (const tree of trees) {
+                const dx = tree.x - player.x;
+                const dy = tree.y - player.y;
+                const distSq = dx * dx + dy * dy;
+
+                if (distSq > maxRenderDist * maxRenderDist) continue;
+
+                const angle = Math.atan2(dy, dx);
+                let relAngle = angle - player.angle;
+                while (relAngle > Math.PI) relAngle -= Math.PI * 2;
+                while (relAngle < -Math.PI) relAngle += Math.PI * 2;
+
+                if (Math.abs(relAngle) <= fovHalf) {
+                    tree._distSq = distSq;
+                    tree._isTree = true;
+                    allVisibleSprites.push(tree);
+                }
+            }
+
+            // Add visible villagers
+            if (villagerTexture) {
                 for (const sprite of sprites) {
                     const dx = sprite.x - player.x;
                     const dy = sprite.y - player.y;
                     const distSq = dx * dx + dy * dy;
 
-                    // Quick distance check
                     if (distSq > maxRenderDist * maxRenderDist) continue;
 
-                    // Quick angle check
                     const angle = Math.atan2(dy, dx);
                     let relAngle = angle - player.angle;
                     while (relAngle > Math.PI) relAngle -= Math.PI * 2;
                     while (relAngle < -Math.PI) relAngle += Math.PI * 2;
 
                     if (Math.abs(relAngle) <= fovHalf) {
-                        sprite._distSq = distSq; // Cache for sorting
-                        visibleSprites.push(sprite);
+                        sprite._distSq = distSq;
+                        sprite._isTree = false;
+                        allVisibleSprites.push(sprite);
                     }
                 }
+            }
 
-                // Sort only visible sprites (far to near)
-                visibleSprites.sort((a, b) => b._distSq - a._distSq);
+            // Sort all sprites together (far to near)
+            allVisibleSprites.sort((a, b) => b._distSq - a._distSq);
 
-                for (const sprite of visibleSprites) {
-                    sprite.render(ctx, canvas, wallDistances);
-                }
+            // Render all sprites in distance order
+            for (const sprite of allVisibleSprites) {
+                sprite.render(ctx, canvas, wallDistances);
             }
 
             // Draw the crowbar on top of everything
@@ -1387,6 +1661,16 @@
                     building.width * scale,
                     building.depth * scale
                 );
+            }
+
+            // Draw trees on minimap (only if within minimap bounds)
+            minimapCtx.fillStyle = '#2d5a27';
+            for (const tree of trees) {
+                if (tree.y >= 0 && tree.y <= WORLD_SIZE) {
+                    minimapCtx.beginPath();
+                    minimapCtx.arc(tree.x * scale, tree.y * scale, 1.5, 0, Math.PI * 2);
+                    minimapCtx.fill();
+                }
             }
 
             // Draw villagers on minimap
