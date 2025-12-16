@@ -144,8 +144,29 @@ export function getSkyTexture() {
 }
 
 // Tree textures
-export const TREE_VARIATIONS = 4;
+// 7 tree types: 0=Pine, 1=Oak, 2=Tall Pine, 3=Willow, 4=Cypress, 5=Birch, 6=Dead
+export const TREE_VARIATIONS = 7;
 export const treeTextures = [];
+
+function drawTrunk(texCtx, x, y, w, h, colors) {
+    const trunkGrad = texCtx.createLinearGradient(x, 0, x + w, 0);
+    trunkGrad.addColorStop(0, colors.dark);
+    trunkGrad.addColorStop(0.3, colors.mid);
+    trunkGrad.addColorStop(0.7, colors.light);
+    trunkGrad.addColorStop(1, colors.dark);
+    texCtx.fillStyle = trunkGrad;
+    texCtx.fillRect(x, y, w, h);
+
+    // Trunk texture lines
+    texCtx.strokeStyle = 'rgba(0,0,0,0.2)';
+    texCtx.lineWidth = 1;
+    for (let i = 0; i < h; i += 6) {
+        texCtx.beginPath();
+        texCtx.moveTo(x + 2, y + i);
+        texCtx.lineTo(x + w - 2, y + i + 3);
+        texCtx.stroke();
+    }
+}
 
 export function generateTreeTexture(variation) {
     const width = 64;
@@ -155,110 +176,316 @@ export function generateTreeTexture(variation) {
     texCanvas.height = height;
     const texCtx = texCanvas.getContext('2d');
 
-    // Clear with transparency
     texCtx.clearRect(0, 0, width, height);
 
-    // Variation parameters
-    const trunkWidth = 8 + (variation % 2) * 4;
-    const trunkHeight = 25 + (variation % 3) * 5;
-    const foliageStyle = variation % 2; // 0 = pine, 1 = round
+    const centerX = width / 2;
 
-    // Draw trunk
-    const trunkX = width / 2 - trunkWidth / 2;
-    const trunkY = height - trunkHeight;
+    // Tree type based on variation
+    switch (variation) {
+        case 0: // Classic Pine - triangular layers
+            {
+                const trunkWidth = 10;
+                const trunkHeight = 28;
+                const trunkX = centerX - trunkWidth / 2;
+                const trunkY = height - trunkHeight;
+                drawTrunk(texCtx, trunkX, trunkY, trunkWidth, trunkHeight,
+                    { dark: '#3d2817', mid: '#5c4033', light: '#4a3525' });
 
-    // Trunk gradient
-    const trunkGrad = texCtx.createLinearGradient(trunkX, 0, trunkX + trunkWidth, 0);
-    trunkGrad.addColorStop(0, '#3d2817');
-    trunkGrad.addColorStop(0.3, '#5c4033');
-    trunkGrad.addColorStop(0.7, '#4a3525');
-    trunkGrad.addColorStop(1, '#2d1810');
-    texCtx.fillStyle = trunkGrad;
-    texCtx.fillRect(trunkX, trunkY, trunkWidth, trunkHeight);
+                const layers = 4;
+                const foliageTop = 8;
+                const foliageBottom = trunkY + 5;
+                const layerHeight = (foliageBottom - foliageTop) / layers;
 
-    // Trunk texture lines
-    texCtx.strokeStyle = 'rgba(0,0,0,0.2)';
-    texCtx.lineWidth = 1;
-    for (let i = 0; i < trunkHeight; i += 6) {
-        texCtx.beginPath();
-        texCtx.moveTo(trunkX + 2, trunkY + i);
-        texCtx.lineTo(trunkX + trunkWidth - 2, trunkY + i + 3);
-        texCtx.stroke();
-    }
+                for (let i = 0; i < layers; i++) {
+                    const layerY = foliageTop + i * layerHeight * 0.7;
+                    const layerWidth = 18 + i * 10;
 
-    // Draw foliage
-    const foliageBottom = trunkY + 5;
-    const foliageTop = 5;
+                    texCtx.fillStyle = `rgb(25, 65, 20)`;
+                    texCtx.beginPath();
+                    texCtx.moveTo(centerX, layerY);
+                    texCtx.lineTo(centerX - layerWidth / 2, layerY + layerHeight + 8);
+                    texCtx.lineTo(centerX + layerWidth / 2, layerY + layerHeight + 8);
+                    texCtx.closePath();
+                    texCtx.fill();
 
-    if (foliageStyle === 0) {
-        // Pine tree - triangular layers
-        const layers = 3 + (variation % 2);
-        const layerHeight = (foliageBottom - foliageTop) / layers;
-
-        for (let i = 0; i < layers; i++) {
-            const layerY = foliageTop + i * layerHeight * 0.7;
-            const layerWidth = 15 + i * 12 + (variation * 3);
-            const baseGreen = 30 + (variation * 10);
-
-            // Layer shadow
-            texCtx.fillStyle = `rgb(${baseGreen - 15}, ${60 + variation * 5}, ${baseGreen - 10})`;
-            texCtx.beginPath();
-            texCtx.moveTo(width / 2, layerY);
-            texCtx.lineTo(width / 2 - layerWidth / 2, layerY + layerHeight + 10);
-            texCtx.lineTo(width / 2 + layerWidth / 2, layerY + layerHeight + 10);
-            texCtx.closePath();
-            texCtx.fill();
-
-            // Layer main
-            const foliageGrad = texCtx.createLinearGradient(0, layerY, 0, layerY + layerHeight);
-            foliageGrad.addColorStop(0, `rgb(${baseGreen + 20}, ${90 + variation * 8}, ${baseGreen})`);
-            foliageGrad.addColorStop(1, `rgb(${baseGreen}, ${65 + variation * 5}, ${baseGreen - 10})`);
-            texCtx.fillStyle = foliageGrad;
-            texCtx.beginPath();
-            texCtx.moveTo(width / 2, layerY - 5);
-            texCtx.lineTo(width / 2 - layerWidth / 2 + 3, layerY + layerHeight + 5);
-            texCtx.lineTo(width / 2 + layerWidth / 2 - 3, layerY + layerHeight + 5);
-            texCtx.closePath();
-            texCtx.fill();
-        }
-    } else {
-        // Round/deciduous tree - circular foliage
-        const centerX = width / 2;
-        const radius = 22 + variation * 4;
-        const centerY = foliageTop + radius;
-        const baseGreen = 40 + variation * 8;
-
-        // Multiple overlapping circles for organic look
-        const circles = [
-            { x: 0, y: 0, r: radius, dark: false },
-            { x: -10, y: 5, r: radius * 0.7, dark: true },
-            { x: 10, y: 5, r: radius * 0.7, dark: true },
-            { x: 0, y: -8, r: radius * 0.6, dark: false },
-            { x: -6, y: 10, r: radius * 0.5, dark: true },
-            { x: 8, y: 8, r: radius * 0.5, dark: true },
-        ];
-
-        for (const circle of circles) {
-            const grad = texCtx.createRadialGradient(
-                centerX + circle.x, centerY + circle.y, 0,
-                centerX + circle.x, centerY + circle.y, circle.r
-            );
-            if (circle.dark) {
-                grad.addColorStop(0, `rgb(${baseGreen + 10}, ${75 + variation * 6}, ${baseGreen - 5})`);
-                grad.addColorStop(1, `rgba(${baseGreen - 10}, ${55 + variation * 4}, ${baseGreen - 15}, 0.8)`);
-            } else {
-                grad.addColorStop(0, `rgb(${baseGreen + 25}, ${95 + variation * 6}, ${baseGreen + 5})`);
-                grad.addColorStop(0.7, `rgb(${baseGreen + 5}, ${70 + variation * 5}, ${baseGreen - 5})`);
-                grad.addColorStop(1, `rgba(${baseGreen - 5}, ${60 + variation * 4}, ${baseGreen - 10}, 0.9)`);
+                    const foliageGrad = texCtx.createLinearGradient(0, layerY, 0, layerY + layerHeight);
+                    foliageGrad.addColorStop(0, 'rgb(50, 100, 40)');
+                    foliageGrad.addColorStop(1, 'rgb(30, 70, 25)');
+                    texCtx.fillStyle = foliageGrad;
+                    texCtx.beginPath();
+                    texCtx.moveTo(centerX, layerY - 3);
+                    texCtx.lineTo(centerX - layerWidth / 2 + 3, layerY + layerHeight + 5);
+                    texCtx.lineTo(centerX + layerWidth / 2 - 3, layerY + layerHeight + 5);
+                    texCtx.closePath();
+                    texCtx.fill();
+                }
             }
-            texCtx.fillStyle = grad;
-            texCtx.beginPath();
-            texCtx.arc(centerX + circle.x, centerY + circle.y, circle.r, 0, Math.PI * 2);
-            texCtx.fill();
-        }
+            break;
+
+        case 1: // Oak - wide round canopy
+            {
+                const trunkWidth = 14;
+                const trunkHeight = 30;
+                const trunkX = centerX - trunkWidth / 2;
+                const trunkY = height - trunkHeight;
+                drawTrunk(texCtx, trunkX, trunkY, trunkWidth, trunkHeight,
+                    { dark: '#3d2817', mid: '#5c4033', light: '#4a3525' });
+
+                const radius = 28;
+                const foliageCenterY = 30;
+
+                const circles = [
+                    { x: 0, y: 0, r: radius },
+                    { x: -12, y: 5, r: radius * 0.7 },
+                    { x: 12, y: 5, r: radius * 0.7 },
+                    { x: 0, y: -10, r: radius * 0.6 },
+                    { x: -8, y: 12, r: radius * 0.5 },
+                    { x: 10, y: 10, r: radius * 0.5 },
+                ];
+
+                for (const circle of circles) {
+                    const grad = texCtx.createRadialGradient(
+                        centerX + circle.x, foliageCenterY + circle.y, 0,
+                        centerX + circle.x, foliageCenterY + circle.y, circle.r
+                    );
+                    grad.addColorStop(0, 'rgb(60, 110, 45)');
+                    grad.addColorStop(0.6, 'rgb(45, 85, 35)');
+                    grad.addColorStop(1, 'rgba(35, 70, 28, 0.9)');
+                    texCtx.fillStyle = grad;
+                    texCtx.beginPath();
+                    texCtx.arc(centerX + circle.x, foliageCenterY + circle.y, circle.r, 0, Math.PI * 2);
+                    texCtx.fill();
+                }
+            }
+            break;
+
+        case 2: // Tall Pine - narrow and tall
+            {
+                const trunkWidth = 8;
+                const trunkHeight = 35;
+                const trunkX = centerX - trunkWidth / 2;
+                const trunkY = height - trunkHeight;
+                drawTrunk(texCtx, trunkX, trunkY, trunkWidth, trunkHeight,
+                    { dark: '#2d1810', mid: '#4a3525', light: '#3d2817' });
+
+                const layers = 6;
+                const foliageTop = 5;
+                const foliageBottom = trunkY + 8;
+                const layerHeight = (foliageBottom - foliageTop) / layers;
+
+                for (let i = 0; i < layers; i++) {
+                    const layerY = foliageTop + i * layerHeight * 0.75;
+                    const layerWidth = 10 + i * 6;
+
+                    const foliageGrad = texCtx.createLinearGradient(0, layerY, 0, layerY + layerHeight);
+                    foliageGrad.addColorStop(0, 'rgb(35, 80, 30)');
+                    foliageGrad.addColorStop(1, 'rgb(20, 55, 18)');
+                    texCtx.fillStyle = foliageGrad;
+                    texCtx.beginPath();
+                    texCtx.moveTo(centerX, layerY - 2);
+                    texCtx.lineTo(centerX - layerWidth / 2, layerY + layerHeight + 4);
+                    texCtx.lineTo(centerX + layerWidth / 2, layerY + layerHeight + 4);
+                    texCtx.closePath();
+                    texCtx.fill();
+                }
+            }
+            break;
+
+        case 3: // Willow - drooping branches
+            {
+                const trunkWidth = 12;
+                const trunkHeight = 32;
+                const trunkX = centerX - trunkWidth / 2;
+                const trunkY = height - trunkHeight;
+                drawTrunk(texCtx, trunkX, trunkY, trunkWidth, trunkHeight,
+                    { dark: '#4a3a2a', mid: '#6a5a4a', light: '#5a4a3a' });
+
+                // Main canopy
+                const grad = texCtx.createRadialGradient(centerX, 25, 0, centerX, 25, 22);
+                grad.addColorStop(0, 'rgb(70, 120, 50)');
+                grad.addColorStop(1, 'rgba(50, 90, 40, 0.8)');
+                texCtx.fillStyle = grad;
+                texCtx.beginPath();
+                texCtx.arc(centerX, 25, 22, 0, Math.PI * 2);
+                texCtx.fill();
+
+                // Drooping branches
+                texCtx.strokeStyle = 'rgb(55, 95, 40)';
+                texCtx.lineWidth = 2;
+                for (let i = 0; i < 12; i++) {
+                    const startX = centerX + (Math.random() - 0.5) * 30;
+                    const startY = 30 + Math.random() * 15;
+                    const endX = startX + (Math.random() - 0.5) * 20;
+                    const endY = startY + 20 + Math.random() * 25;
+                    const ctrlX = (startX + endX) / 2 + (Math.random() - 0.5) * 10;
+                    const ctrlY = startY + 15;
+
+                    texCtx.beginPath();
+                    texCtx.moveTo(startX, startY);
+                    texCtx.quadraticCurveTo(ctrlX, ctrlY, endX, endY);
+                    texCtx.stroke();
+                }
+
+                // Leaves on branches
+                texCtx.fillStyle = 'rgb(65, 110, 45)';
+                for (let i = 0; i < 40; i++) {
+                    const x = centerX + (Math.random() - 0.5) * 40;
+                    const y = 35 + Math.random() * 40;
+                    texCtx.beginPath();
+                    texCtx.ellipse(x, y, 2, 4, Math.random() * Math.PI, 0, Math.PI * 2);
+                    texCtx.fill();
+                }
+            }
+            break;
+
+        case 4: // Cypress - tall narrow column
+            {
+                const trunkWidth = 6;
+                const trunkHeight = 20;
+                const trunkX = centerX - trunkWidth / 2;
+                const trunkY = height - trunkHeight;
+                drawTrunk(texCtx, trunkX, trunkY, trunkWidth, trunkHeight,
+                    { dark: '#3d2817', mid: '#5c4033', light: '#4a3525' });
+
+                // Tall columnar shape
+                const foliageGrad = texCtx.createLinearGradient(centerX - 12, 0, centerX + 12, 0);
+                foliageGrad.addColorStop(0, 'rgb(25, 60, 25)');
+                foliageGrad.addColorStop(0.3, 'rgb(40, 85, 35)');
+                foliageGrad.addColorStop(0.7, 'rgb(35, 75, 30)');
+                foliageGrad.addColorStop(1, 'rgb(20, 50, 20)');
+
+                texCtx.fillStyle = foliageGrad;
+                texCtx.beginPath();
+                texCtx.moveTo(centerX, 3);
+                texCtx.quadraticCurveTo(centerX + 14, 20, centerX + 12, trunkY + 5);
+                texCtx.lineTo(centerX - 12, trunkY + 5);
+                texCtx.quadraticCurveTo(centerX - 14, 20, centerX, 3);
+                texCtx.closePath();
+                texCtx.fill();
+
+                // Texture details
+                texCtx.fillStyle = 'rgba(20, 45, 18, 0.5)';
+                for (let y = 10; y < trunkY; y += 8) {
+                    const w = 8 + (y / trunkY) * 6;
+                    texCtx.beginPath();
+                    texCtx.arc(centerX, y, w, 0, Math.PI * 2);
+                    texCtx.fill();
+                }
+            }
+            break;
+
+        case 5: // Birch - grey bark with round canopy
+            {
+                const trunkWidth = 8;
+                const trunkHeight = 32;
+                const trunkX = centerX - trunkWidth / 2;
+                const trunkY = height - trunkHeight;
+
+                // Darker grey birch bark
+                const barkGrad = texCtx.createLinearGradient(trunkX, 0, trunkX + trunkWidth, 0);
+                barkGrad.addColorStop(0, '#5a5a55');
+                barkGrad.addColorStop(0.3, '#7a7a70');
+                barkGrad.addColorStop(0.7, '#6a6a62');
+                barkGrad.addColorStop(1, '#505048');
+                texCtx.fillStyle = barkGrad;
+                texCtx.fillRect(trunkX, trunkY, trunkWidth, trunkHeight);
+
+                // Dark bark markings
+                texCtx.fillStyle = '#2a2a25';
+                for (let y = trunkY + 5; y < height - 5; y += 8 + Math.random() * 6) {
+                    const markWidth = 3 + Math.random() * 4;
+                    const markX = trunkX + Math.random() * (trunkWidth - markWidth);
+                    texCtx.fillRect(markX, y, markWidth, 2);
+                }
+
+                // Light green foliage - positioned lower to connect with trunk
+                const radius = 24;
+                const foliageCenterY = 38;
+                const circles = [
+                    { x: 0, y: 0, r: radius },
+                    { x: -10, y: 8, r: radius * 0.7 },
+                    { x: 10, y: 6, r: radius * 0.7 },
+                    { x: 0, y: -10, r: radius * 0.55 },
+                    { x: 0, y: 15, r: radius * 0.5 },  // Bottom circle to connect to trunk
+                ];
+
+                for (const circle of circles) {
+                    const grad = texCtx.createRadialGradient(
+                        centerX + circle.x, foliageCenterY + circle.y, 0,
+                        centerX + circle.x, foliageCenterY + circle.y, circle.r
+                    );
+                    grad.addColorStop(0, 'rgb(80, 130, 55)');
+                    grad.addColorStop(0.6, 'rgb(60, 105, 45)');
+                    grad.addColorStop(1, 'rgba(45, 85, 35, 0.85)');
+                    texCtx.fillStyle = grad;
+                    texCtx.beginPath();
+                    texCtx.arc(centerX + circle.x, foliageCenterY + circle.y, circle.r, 0, Math.PI * 2);
+                    texCtx.fill();
+                }
+            }
+            break;
+
+        case 6: // Dead tree - bare branches
+            {
+                const trunkWidth = 10;
+                const trunkHeight = 45;
+                const trunkX = centerX - trunkWidth / 2;
+                const trunkY = height - trunkHeight;
+
+                // Grayish dead bark
+                const barkGrad = texCtx.createLinearGradient(trunkX, 0, trunkX + trunkWidth, 0);
+                barkGrad.addColorStop(0, '#3a3530');
+                barkGrad.addColorStop(0.5, '#5a5550');
+                barkGrad.addColorStop(1, '#454540');
+                texCtx.fillStyle = barkGrad;
+                texCtx.fillRect(trunkX, trunkY, trunkWidth, trunkHeight);
+
+                // Trunk texture
+                texCtx.strokeStyle = 'rgba(0,0,0,0.3)';
+                texCtx.lineWidth = 1;
+                for (let i = 0; i < trunkHeight; i += 5) {
+                    texCtx.beginPath();
+                    texCtx.moveTo(trunkX, trunkY + i);
+                    texCtx.lineTo(trunkX + trunkWidth, trunkY + i + 2);
+                    texCtx.stroke();
+                }
+
+                // Bare branches
+                texCtx.strokeStyle = '#4a4540';
+                texCtx.lineWidth = 3;
+
+                // Main branches
+                const branches = [
+                    { x1: centerX, y1: trunkY + 10, x2: centerX - 20, y2: trunkY - 5, cx: centerX - 10, cy: trunkY },
+                    { x1: centerX, y1: trunkY + 15, x2: centerX + 22, y2: trunkY, cx: centerX + 12, cy: trunkY + 5 },
+                    { x1: centerX, y1: trunkY + 25, x2: centerX - 18, y2: trunkY + 12, cx: centerX - 8, cy: trunkY + 15 },
+                    { x1: centerX, y1: trunkY + 8, x2: centerX + 15, y2: trunkY - 10, cx: centerX + 8, cy: trunkY - 3 },
+                ];
+
+                for (const b of branches) {
+                    texCtx.beginPath();
+                    texCtx.moveTo(b.x1, b.y1);
+                    texCtx.quadraticCurveTo(b.cx, b.cy, b.x2, b.y2);
+                    texCtx.stroke();
+                }
+
+                // Smaller twigs
+                texCtx.lineWidth = 1.5;
+                texCtx.strokeStyle = '#555550';
+                for (let i = 0; i < 8; i++) {
+                    const startX = centerX + (Math.random() - 0.5) * 25;
+                    const startY = trunkY + Math.random() * 20;
+                    const endX = startX + (Math.random() - 0.5) * 15;
+                    const endY = startY - 5 - Math.random() * 10;
+                    texCtx.beginPath();
+                    texCtx.moveTo(startX, startY);
+                    texCtx.lineTo(endX, endY);
+                    texCtx.stroke();
+                }
+            }
+            break;
     }
 
-    // Get image data
     return {
         width: width,
         height: height,
