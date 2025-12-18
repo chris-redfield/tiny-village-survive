@@ -87,6 +87,17 @@ function gameLoop() {
     if (keys['q']) player.pitch = Math.min(0.8, player.pitch + 0.02 * deltaMultiplier);
     if (keys['e']) player.pitch = Math.max(-0.8, player.pitch - 0.02 * deltaMultiplier);
 
+    // Jump physics
+    if (keys[' '] && player.z === player.groundZ) {
+        player.velocityZ = player.jumpStrength;
+    }
+    player.velocityZ -= player.gravity * deltaMultiplier;
+    player.z += player.velocityZ * deltaMultiplier;
+    if (player.z <= player.groundZ) {
+        player.z = player.groundZ;
+        player.velocityZ = 0;
+    }
+
     // Update villagers
     for (const villager of villagers) {
         villager.update();

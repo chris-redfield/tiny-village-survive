@@ -10,7 +10,12 @@ export const player = {
     pitch: 0,
     moveSpeed: 4,
     fov: Math.PI / 3,
-    rayCount: 400
+    rayCount: 400,
+    // Jump state
+    velocityZ: 0,
+    groundZ: 30,
+    jumpStrength: 8,
+    gravity: 0.4
 };
 
 // Player movement with collision
